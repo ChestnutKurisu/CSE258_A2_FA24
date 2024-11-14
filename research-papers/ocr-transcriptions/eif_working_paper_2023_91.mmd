@@ -1,0 +1,764 @@
+Using machine learning to map the European Cleantech sector
+
+Mateo Ambrois, Vincenzo Buttic, Federico Caviggioli, Giovanni Cerulli, Annalisa Croce, Antonio De Marco, Andrea Giordano, Giuliano Resce, Laura Toschi, Elisa Ughetto, Antonio Zinilli* [14] Mateo Ambrosio
+
+_Politecnico di Milano_
+
+**Vincenzo Butticc**
+
+_Politecnico di Milano_
+
+**Federico Caviggioli**
+
+_Politecnico di Torino_
+
+**Giovanni Cerulli,**
+
+_IRCrES-CNR_
+
+**Annalisa Croce**
+
+_Politecnico di Milano_
+
+**Antonio De Marco**
+
+_Politecnico di Torino_
+
+**Andrea Giordano**
+
+_Politecnico di Torino_
+
+_IUSS Pavia_
+
+**Giullano Resce**
+
+_Universita del Molise_
+
+**Laura Toschi**
+
+_Universita degli Studi di Bologna_
+
+**Elisa Ughetto**
+
+_Politecnico di Torino_
+
+**Antonio Zinilli**
+
+_IRCrES-CNR_
+
+**Editor:**
+
+Helmut Kraemer-Eis,
+
+Head of Elf's Research & Market Analysis, Chief Economist
+
+**Contact:**
+
+European Investment Fund
+
+57B, avenue J.F. Kennedy, L-2968 Luxembourg
+
+_Scan above to obtain a PDF version of this working paper_
+
+_[http://www.eif.org/news.centre/research/index.htm_](http://www.eif.org/news.centre/research/index.htm_)
+
+Luxembourg, July 2023
+
+## Disclaimer
+
+This Working Paper should not be referred to as representing the views of the European Investment Fund (EIF) or of the European Investment Bank Group (EIB Group). Any views expressed herein, including interpretation(s) of regulations, reflect the current views of the author(s), which do not necessarily correspond to the views of EIF or of the EIB Group. Views expressed herein may differ from views set out in other documents, including similar research papers, published by EIF or by the EIB Group. Contents of this Working Paper, including views expressed, are current at the date of publication set out above, and may change without notice. No representation or warranty, express or implied, is or will be made and no liability or responsibility is or will be accepted by EIF or by the EIB Group in respect of the accuracy or completeness of the information contained herein and any such liability is expressly disclaimed. Nothing in this Working Paper constitutes investment, legal, or tax advice, nor shall be relied upon as such advice. Specific professional advice should always be sought separately before taking any action based on this Working Paper. Reproduction, publication and reprint are subject to prior written authorisation.
+
+## Preface
+
+This paper is the introductory chapter of a series of analyses that will result from the CLEU1 project, a collaboration between the universities of Politecnico di Torino, Politecnico di Milano and Universita degli Studi di Bologna. The project focuses on Cleantech, an industry sector that develops and deploys sustainable and environmentally friendly solutions for various target applications. It aims to: i) analyse the actions that are undertaken by European Cleantech firms to engage in transformative climate and innovation actions to align with the European Green Deal-inspired policies; ii) examine the association of environmental innovation and the number of new investments made by venture capital (VC) investors in Cleantech companies on environmental indicators; iii) analyse the enabling factors for the development of European Cleantech firms, with a focus on EU-level and country-level targeted policies and regulations and the different sources of financing; iv) analyse the extent to which the implementation of policies and regulations affect both the propensity of cleantech firms to seek external equity financing and the equity offering by VC funds.
+
+Footnote 1: The Cleantech industry in the European Green Deal: policy challenges and the finance landscape for SMEs: [https://shoruf.edu/ir202](https://shoruf.edu/ir202)
+
+This paper presents a methodology to identify Cleantech companies in Bureau van Dijk's Orbis, a business database that provides detailed balance sheet information on millions of companies worldwide. The resulting dataset will shed a novel light on the European Cleantech sector, which thus far has mostly been analysed from the perspective of investment databases. The subsequent analyses of the CLEU project will rely heavily on the Cleantech data outlined in this paper.
+
+This project was funded by the European Investment Bank (EIB)'s University Research Sponsorship (EIBURS) programme. The EIBURS provides grants to help EU universities and academic research centres to develop activities in selected research areas in addition to those that would normally be carried out by the beneficiary and on topics of major interest to the EIB Group (European Investment Bank and European Investment Fund). The CLEU project is coordinated by the Research and Market Analysis Division of the European Investment Fund (EIF).
+
+Understanding the financing needs of the EU Cleantech sector is of particular importance to the EIF for several reasons. Firstly, Cleantech companies often require significant upfront capital investments due to the high costs associated with developing and scaling clean technologies. By understanding their financing needs, the EIF can tailor its funding programs and financial instruments to provide appropriate support, such as VC, loans or guarantees, to help these companies overcome financial barriers and access the necessary capital.
+
+The EIF plays a crucial role in promoting Cleantech companies and initiatives in Europe. As the EIB Group's specialist provider of risk finance to benefit SMEs across Europe, the EIF provides financing and support to enhance access to capital for Cleantech startups and businesses. Today, the EIF offers various financial instruments, such as VC funds, equity investments and loan guarantees, specifically targeting Cleantech sectors including renewable energy, energy efficiency, sustainable mobility, and circular economy. Currently, the EIF manages several initiatives that aim to stimulate investments in EU Cleantech companies. For example, the InvestEU SME Window,through its Climate and Environment products, contains a EUR 900m pocket to increase access to equity finance for innovative SMEs that develop or adopt Cleantech solutions, while the EIF's RCR mandate provides EUR 500m annually, on average, over the period EUR 2022-2027, to European funds investing in Cleantech companies. This amount was recently topped up by approximately EUR 500m per annum through the Commission's REPowerEU plan.
+
+By expanding our understanding of the Cleantech sector through the CLEU project, policymakers can further improve the design of targeted support schemes to accelerate the adoption of clean technologies, reduce greenhouse gas emissions, improve environmental quality, and promote sustainable resource utilization, thus driving the European green transition and positioning the EU at the forefront of the global Cleantech industry.
+
+We therefor invite you to delve into this introductory analysis and explore the first findings of the CLEU project and wish you an informative and engaging reading experience.
+
+Helmut Kraemer-Eis
+
+Editor
+
+**Wouter Torfs**
+
+Project coordinatorNon-technical Summary2
+Footnote 2: This paper benefited from comments and input of Adelaide Cracco, Merilin Hörats, Helmut Kraemer-Eis, Andrea Hermida Parapar and Wouter Torfs. All remaining errors are our own.
+
+This study provides a new perspective on European Cleantech, a sector that develops and deployes sustainable and environmentally friendly solutions for various target applications. It presents a novel solution to classify Cleantech companies based on a supervised machine learning (ML) algorithm applied to the extended business description of European companies, as found in Bureau van Dijk's Orbis database, a comprehensive and global business database that provides detailed information on millions of companies worldwide.
+
+The process of using ML to classify Cleantech companies based on business descriptions involves a two-step approach. First, a small set of companies is extracted from the database and manually identified and labeled as Cleantech or non-Cleantech. This labeled dataset serves as a training set for machine learning models. By analysing the training data, the machine learning model can learn to assign a probability or confidence score to new, unseen company descriptions, indicating the likelihood of them belonging to the Cleantech category. The model essentially learns to generalise from the patterns it observed in the training data and to apply that knowledge to classify new descriptions. For example, it might learn that terms like "sustainable," "renewable," "energy efficiency," "waste management," "environmental conservation," or "carbon footprint reduction" are often indicative of Cleantech businesses. Once the model is trained and validated, it can be deployed to automatically classify large volumes of company descriptions, helping researchers, investors, or policymakers to quickly identify and analyse Cleantech companies.
+
+The resulting dataset will shed new light on the European Cleantech sector. Earlier studies, typically based on investment databases, provided only a partial perspective of the Cleantech phenomenon, as such databases only include Cleantech companies that have been involved in an investment transaction. By employing a general database of administrative balance sheet data with coverage of the vast majority of the population of companies, such as the one applied in this paper, we are able to broaden the scope of our analysis. Furthermore, matching our sample of Cleantech companies to a variety of other databases led to a number of new valuable insights into the European Cleantech sector, related to sectoral and geographic distribution, innovative capacity, size, VC investment activity, and others.
+
+Comparing our newly developed Cleantech classification to the traditional NACE sector classification, we found that Cleantech companies are predominantly active in the manufacturing, wholesale and retail trade, water supply and waste management, and construction sectors. Examining the spatial distribution of Cleantech in Europe, Germany, Italy, and France emerge as the key countries with the highest concentration of Cleantech companies. We also found Cleantech to be a well-established phenomenon, pre-dating to a large extent the two important Cleantech investment cycles, as a significant portion of the companies were established before the 2000s. We also analysed patenting activity of our Cleantech sample and found that Austria's Cleantech ecosystem is the most innovation-intensive, followed by Sweden and Germany, with sustainable energy production, energy-efficient industrial technologies, and air/water/soil pollution being the prominent technological categories for patenting. Investigating a selection of essential financial key performance indicators (KPIs) led us to conclude that cleantech innovators tend to operate at a larger scale compared to their ecosystem counterparts, in terms of total assets, sales and employee count. Finally, concerning VC financing, Finland, Sweden, France and Spain emerge as the geographical areas with a high concentration of VC-backed companiesTable of Contents
+
+1 Introduction
+
+2 The identification of Cleantech companies
+
+2.11 Three steps methodology
+
+2.21 Computer-aided filters
+
+2.51 Manual classification
+
+2.52.1 Classification of Cleantech companies into technological categories
+
+2.53.2 Classification of Cleantech companies into ecosystem segments
+
+2.41 Limitations
+
+8 The mapping of Cleantech in Europe
+
+3.11 Descriptive statistics on Cleantech companies
+
+3.11 By ecosystem segment and technological category
+
+3.12 By geography
+
+3.13 By sector
+
+3.14 By year of incorporation
+
+3.21 Patent data
+
+3.51 Financial KPIs
+
+3.41 Venture capital investment in Cleantech companies
+
+[MISSING_PAGE_POST]
+
+3.49 The \(\beta
+
+## 1 Introduction
+
+The European Union (EU) has long pursued a leading role in the development of policies to address climate change and environmental degradation. Recently, the Commission introduced the European Green Deal, which provides a roadmap to steer the EU towards a path of sustainable development. In addition to the 2050 carbon neutrality commitment, the Green Deal focuses on a broad range of environmental targets.
+
+The European Green Deal emphasises the importance of green innovations and the role of private companies that focus on the development of sustainability solutions (Cleantech, also commonly referred to as Greentech).5 Cleantech companies play a critical role in addressing environmental challenges such as climate change, pollution and resource depletion. Cleantech companies have the potential to drive economic growth by creating new jobs, generating revenue and attracting investment. By identifying and supporting Cleantech companies, policymakers can help foster environmental innovation, which is likely to generate positive economic ripple throughout the broader economy, boosting growth and employment. Moreover, supporting Cleantech companies can safeguard Europe's competitive position on global markets, where clean technology is likely to gain significant importance.
+
+Identifying Cleantech companies is challenging, as there is no universally accepted definition of what constitutes Cleantech. Current definitions of Cleantech are often too generic and broad, leading to confusion and inconsistencies in how the industry is defined.4 Existing classification methods based upon industry labels (i.e., NACE codes) have proven to be inefficient in properly identifying Cleantech firms, as they are not able to capture the cross-cutting nature of the sector (Christensen & Hain, 2017; Criscuolo & Menon, 2015; Cumming et al., 2016). Other classification attempts, such as the EU Taxonomy, translate the EU's climate and environmental objectives into criteria for specific economic activities for investment purposes. By nature, however, such classification approaches are too rigid and risk not considering the dynamic nature of the sector.
+
+Footnote 4: See Annex A for a brief history of the Cleantech concept.
+
+This study provides an alternative solution to classify Cleantech companies by developing a robust and fully replicable original methodology to identify European Cleantech companies in the Orbis database, a large company-level database commercialised by Bureau Van Dijk, through the use of a supervised machine learning (ML) algorithm applied to the extended business description of European companies. The resulting dataset will shed new light on the European Cleantech sector. Earlier studies, typically based on investment databases, provided only a partial perspective of the Cleantech phenomenon. By using a balance sheet database, such as the one provided by Bureau Van Dijk, we are able to broaden the scope of our analysis and include Cleantech companies that have never received an equity capital injection. Furthermore, by matching our sample of Cleantech companies to a variety of other databases, we are able toprovide a number of valuable insights into the functioning of the European Cleantech sector, related to geographic distribution, innovative capacity, size, VC investment activity, and others.5
+
+Footnote 5: See for example De Haan-Montes et al. (2025), Kraemer-Eis et al. (2022) or Pitchbook (2025).
+
+In the remainder of this paper, we describe the methodology we employed to identify Cleantech companies in Europe and we provide preliminary descriptives about their distribution in terms of country, industry and foundation year, innovative performance (i.e. patents), accounting data and VC financing, to provide an initial overview of the Cleantech phenomenon in European countries using our novel database.
+
+## Chapter 2 The identification of Cleantech companies
+
+Currently, to the best of our knowledge, no comprehensive database provides a list of companies that fit the Cleantech definition illustrated above. Given the limitations of the existing classification methods (e.g., NACE industrial classification, EU Taxonomy), we developed a novel methodology to identify Cleantech companies, starting from the enterprise business description reported in the Orbis database (managed by Bureau Van Dijk).
+
+The method first implies to manually identify the Cleantech nature of a relatively small set of companies. Then, this "manually-classified" dataset is used to let a machine learn the link between a company description and its Cleantech status. By letting the machine learn this mapping, it is possible to predict the classification of non-manually classified companies. We used a series of machine learning methods whose prediction error is particularly small for non-manually classified firms.
+
+More specifically, the methodology to perform this task was based on three main steps:
+
+1. Supervised machine learning (ML) algorithm applied to each company's extended business description retrieved from Orbis;
+2. Computer-aided filter of false positive Cleantech instances applied to each company labelled as Cleantech in the previous step;
+3. Manual checks, ecosystem segmentation, technological classification, and definition of the role of Cleantech companies (selected in step two) in the Cleantech ecosystem.
+
+We applied the methodology to the entire sample of companies available in Orbis, a dataset handled by Bureau Van Dijk that includes financial information on over 40 million companies worldwide. Orbis has been selected because of company coverage, financial data availability and harmonisation potential. We selected all companies that met the following criteria:
+
+1. Companies located in Europe;
+2. Companies which had recorded accounting data for at least one business year;
+3. Companies with an available extended business description.
+
+After applying the above criteria, 557,129 companies remained. The sample was reduced to 74,047 companies after running the ML algorithm and to 25,858 companies after applying computer-aided filters. Overall, out of 23,858 identified Cleantech companies, we manually classified 2,990 companies as "Cleantech innovators", focusing on clean technology development, and the remaining 20,868 as "Cleantech ecosystem", referring to companies that adopt Cleantech technologies, sell services based on Cleantech technologies, or provide inputs for the development of Cleantech technologies. Figure 1 provides the graphical representation of the methodology used to screen Cleantech companies.
+
+We fitted a series of machine learning algorithms that we trained on our training dataset, i.e. the one manually created and optimally tuned via cross-validation. For this purpose, we first generated a series of features (or predictors) from companies' description texts using text-mining techniques and then regressed these features to predict whether a company is or is not Cleantech. Assessing predictive performance in an out-of-sample mode, we found that the Gradient Boosting Machine (GBM), an ML method aggregating many classification trees, was the most predictive with a prediction accuracy larger than 90%. This accuracy was robust also to the presence of imbalanced data as in our training dataset the number of Cleantech firms is much smaller than the number of non-Cleantech ones. Using our optimal GBM fit, we finally predicted the Cleantech status completely out-of-sample over the larger dataset of 557,129 companies.
+
+## 2 Computer-aided filters
+
+This phase aimed at reducing the number of false positives from the dataset of 74,047 companies obtained from the previous step, i.e. to include only Cleantech companies in the sample. We
+
+Figure 1: Graphical representation of the methodology used to screen Cleantech companies
+
+developed a set of computer-aided filters based on keywords using functions embedded in the Stata software. We developed an iterative process for elaborating these filters. First, we analysed the Cleantech literature to define appropriate keywords about clean technologies. Second, we went through company descriptions to validate the keywords identified in the previous step and to search for new ones. As with the ML step, we prepared the descriptions to reduce errors. Thus, all punctuation marks were removed and the text was reduced to lowercase. In addition, we chose the keywords by examining the word's root where necessary. The result of this phase was a new reduced sample, including 25,858 companies which were broadly defined as "Cleantech".
+
+## 2.3 Manual classification
+
+While the first step allowed for accurate filtering of non-negative Cleantech companies from the starting population and the second step identified Cleantech companies (i.e., only Cleantech companies were included in the final sample), the third and final step had a twofold objective: i) to assign each Cleantech company to one or more technological categories; ii) to distinguish each Cleantech company into "Cleantech ecosystem" (i.e., referring to companies that adopt Cleantech technologies, sell services based on Cleantech technologies, or provide inputs for the development of Cleantech technologies) and "Cleantech innovators" (i.e., referring to companies committed to develop clean technologies). To this aim, two research assistants manually analysed the companies' business descriptions to ensure the maximum accuracy.
+
+### Classification of Cleantech companies into technological categories
+
+Each Cleantech company was classified into seven different technological categories reflecting the pillars of the European Green Deal and the EU Taxonomy. Some of these categories were further divided into sub-categories. We assigned each company to a technological category inspired by Hascic & Migotto (2015), in which technologies are classified according to their contribution to environmental sustainability. It should be noted that a company may be involved in one or more sub-categories. The structure of the seven technological categories (and sub-categories) is presented below:
+
+1. Environmental management 1. _Air/water/soil pollution abatement/remediation_ 2. _Waste management_
+2. Resources preservation 1. _Water conservation/availability_ 2. _Sustainable agri-food technologies_ 3. _Sustainable raw materials_* Industrial energy management 1. _Sustainable energy production_ 2. _Sustainable fuels_ 3. _Energy-efficient industrial technologies_
+* Capture, storage, sequestration or disposal of GHG
+* Sustainable modes of transport
+* Sustainable buildings
+* Other categories
+
+### Environmental management
+
+The first category, _Environmental management_, includes technologies dealing with pollution abatement, remediation, and waste management. In particular, the sub-category 1.1 _Air/water/soil pollution abatement/remediation_ includes those technologies related to the abatement and remediation of air, water, and soil pollution, such as soil or water purification treatments. The subcategory 1.2 _Waste management_ includes companies that produce technologies for solid waste collection, recovery, recycling and reusing raw materials, creation of fertilisers from waste, technologies used for incineration, and energy recovery.
+
+### Resources preservation
+
+The second category, _Resource conservation_, includes technologies that can contribute to the preservation of ecosystems. This class includes sub-category 2.1 _Water conservation/availability_, referring to technologies that deal with water conservation. Examples include water-saving technologies such as taps that control water flow, valves that close automatically after actuation, or valves that close after releasing a predetermined amount of water. The second sub-category 2.2 _Sustainable agri-food technologies_ concerns sustainable agri-food technologies such as hydroponic solutions or precision farming technologies. The third sub-category, 2.3 _Sustainable raw materials_, relates to the development of sustainable raw materials such as bioplastics or biodegradable raw materials obtained from natural materials such as sugar canes or potatoes (Ezgi Bezirhan Arikan & Havva Duygu Ozsoy, 2015).
+
+### Industrial energy management
+
+The third category, _Industrial energy management_, includes technologies for energy production and energy efficiency. Specifically, the sub-category 3.1 _Sustainable energy production_ includes clean energy generation technologies such as wind, solar thermal, photovoltaic, geothermal, marine, and hydroelectric. Other types of power generation considered were new nuclear technologies, fuel cells and co-generation technologies. The sub-category 3.2 _Sustainable fuels_ includes fuels from renewable sources that minimise the environmental impact, e.g. fuels deriving from renewable biomass or from waste. Finally, the sub-category 3.3 _Energy-efficient industrial technologies_ includes battery storage, capacitor and thermal storage. This class also includes technologies related to superconductors, pressurised fluid, mechanical & pumped, recyclable products, and reduction of materials in manufacturing.
+
+### Capture, storage, sequestration, or disposal of GHG
+
+The fourth category, _Capture, storage, sequestration or disposal of GHG,_ includes technologies that deal with the capture of GHG (e.g. carbon dioxide) from the atmosphere and their treatment.
+
+### Sustainable modes of transport
+
+The fifth category, _Sustainable modes of transport,_ includes technologies that can decarbonise the transportation sectors, such as technologies for electric vehicles, fuel cell vehicles or co\({}_{2}\) saving ducts.
+
+### Sustainable buildings
+
+The sixth category, _Sustainable buildings,_ includes technologies for energy efficiency management in buildings, both from an electricity and a thermal point of view. This category includes, among other things, technologies used to insulate buildings, such as expanded polystyrene.
+
+#### Classification of Cleantech companies into ecosystem segments
+
+The second part of the manual classification acknowledges the complexity of the supply chain structure of the Cleantech ecosystem and accordingly segments the 23,858 Cleantech companies into:
+
+1. **"Cleantech innovators":** these companies create (and eventually use) the clean technology as their core business. They are at the centre of the supply chain.
+2. **"Cleantech ecosystem":** these companies adopt clean technologies, sell services based on clean technologies, or provide inputs for the development of clean technologies. We further distinguished such companies into "experimenters" and "manufacturers", which support the realisation of the technology and "distributors", "integrators", and "operators", that make the technology available in the market.
+
+1. _Experimenters:_ companies involved in performing experimental tasks that can lead to discoveries and advances in the science of the Cleantech supply chain (both private and public);72. _Manufacturers:_ companies involved in the Cleantech supply chain, dealing with ancillary services concerning actual innovation; in other words, they deal with manufacturing, fabrication, and production of necessary and auxiliary components or raw materials to the clean technology;8 Footnote 8: They may be manufacturers of components exclusively for clean technologies, but in most cases, their components can be used across several sectors, including the Cleantech sector.
+* _Distributors:_ companies that only distribute or are involved in the commercial provision of certain Cleantech products or technologies. Their primary role is to make clean technologies available on the market;9 Footnote 9: Since commercial activities are also carried out by other actors, starting with the innovators themselves, this class includes those companies that only engage in commercial activities.
+* _Integrators:_ companies involved in the Cleantech supply chain, dealing with accessory services concerning actual innovation; in other words, they deal with engineering, installation, procurement, design, conception, and planning. Their prominent role is to make the clean technology ready to use for the adopters;10 Footnote 10: Since integration activities are also performed by other actors, starting with the innovators themselves, this class includes companies that exclusively perform integration activities using clean technologies provided by other companies.
+* _Operators:_ companies involved in the Cleantech supply chain that deals with the construction, implementation, and maintenance of facilities where clean technology is used; in other words, they are ancillary services for actual innovation. In addition, adopters who use technology as the primary tool to achieve their output (e.g. energy production) are also considered operators.11 Footnote 11: Since management activities are also performed by other actors, starting with the “Cleantech innovators” themselves, this category includes companies that exclusively perform management activities using clean technologies provided by other companies.
+
+Although each company could fit into more than one definition, we decided to assign a unique class according to the company's primary activity.
+
+### Limitations
+
+Some limitations of the applied methodology need to be taken into consideration. First, it is well known that AI systems are not entirely objective as they learn to make decisions based on data, which can include biased human decisions. For instance, during the creation of the training set, the human involvement in the provisioning and selection of data, the way of reasoning and the understanding of what constitutes Cleantech applied by the researchers involved in the process can make the model's predictions susceptible to bias. In order to alleviate this type of bias, we have adopted one of the techniques generally suggested by the literature: the involvement of more researchers to compare perspectives and the application of a rigorous and systematic approach to address inconsistencies. However, this remains a point of attention, not only for this study, but for AI methods in general.
+
+A second bias can also be introduced by the underlying data itself. In our specific case, the outcome of our algorithm is based on the details provided by the companies in their business description. Accordingly, if a company is able to describe its business with an appropriate use of Cleantech-related terms, then the company is correctly depicted as Cleantech. Otherwise, if it is not sufficiently effective in communicating its business model, the terms related to Cleantech might not be mentioned, even if the company is Cleantech (false negative). Moreover, if a company falsely claims to run a Cleantech business model, it will be classified as such, effectively constituting a false positive. This type of problem, however, cannot be addressed for the case at hand, as it depends on a different human bias, the one of the company team which provides description of the business and this is not under the control of the researchers applying the ML technique.
+
+Finally, as a procedural choice, we have decided to focus our attention toward corporates as isolated entitities. However, the Cleantech industry is more complex, with several interconnections among players. Consider, for example, the relationships that exist along the supply chains where players interact for the creation and delivery of products and services from raw materials to the end consumer. Similarly, there are Cleantech clusters that bring together different entities, such as businesses, research institutions, and other stakeholders to develop and commercialise green technologies. These clusters fall beyond the scope of this analysis, even if they are typically located in areas with a strong concentration of green technology companies. Failing to properly identify and classify them is a missing part of the exercise which deserves more attention in the future. Indeed, given the important role played in fostering collaboration, innovation, and knowledge sharing among the different stakeholders involved in the development and deployment of clean technologies, Cleantech clusters can help to accelerate the development and adoption of clean technologies, create new business opportunities, and drive economic growth while addressing environmental challenges.
+
+## Chapter 3 The mapping of Cleantech in Europe
+
+In Europe
+
+### 3.1 Descriptive statistics on Cleantech companies
+
+#### 3.1.1 By ecosystem segment and technological category
+
+Our final sample comprises 23,858 companies broadly identified as Cleantech, 2,990 of which are Cleantech _innovators_ (12.5%). Table 1 reports the distribution of sample companies according to the segmentation described in section 2.5.2 \(|\). Within the Cleantech _ecosystem_ group, companies are equally distributed among _integrators_ (27.5%), _operators_ (23%) and _manufacturers_ (22.6%). The two remaining groups, distributors and experimenters account of 14% and 0.4%, respectively.
+
+The distribution of Cleantech companies in the sample according to the different segments and technological categories described in Section 2.3 \(|\), is reported in Figures 2 and Figure 5.
+
+\begin{table}
+\begin{tabular}{c c c} \hline  & \# companies & \% \\ \hline _Cleantech innovators_ & 2,990 & 12.5\% \\ _Cleantech ecosystem_ & 20,868 & 87.5\% \\ _Experimenters_ & 105 & 0.4\% \\ _Manufacturers_ & 5,380 & 22.6\% \\ _Distributors_ & 5,357 & 14.0\% \\ _Integrators_ & 6,558 & 27.5\% \\ _Operators_ & 5,490 & 23.0\% \\ \hline _Total_ & 23,858 & 100\% \\ \hline \end{tabular}
+\end{table}
+Table 1: Classification of Cleantech companies into different ecosystem segmentsThe decarbonization of energy production is arguably the most significant environmental challenge of our time, reflected by the fact that 45% of companies fall under the _Sustainable Energy Production_ sub-category (3.1) in the Cleantech innovators group. Among the other most prevalent sub-categories are end-of-pipe technologies for environmental management, including _air/water/soil pollution abatement/remediation_ (1.l) at 14% and _waste management_ (1.2) at 12%. Additionally, _energy efficiency in industrial processes_ (3.3) represents 14% of companies, while _sustainable buildings_ (6) make up 16%. The remaining categories, such as _water conservation/availability_ (2.l), _sustainable agri-food technologies_ (2.2), _sustainable raw materials_ (2.3), _sustainable fuels_ (3.2), and _sustainable modes of transport_ (5), each account for approximately less than 5%. Lastly, the _Capture, Storage, Sequestration, or Disposal of GHG category_ (4) is the least represented, constituting less than 1% of the group.
+
+Figure 3 reports the distribution across technological categories for the broader sample of Cleantech companies (innovators and eco-system combined). When considering the broader sample, sub-category 3.1 (_Sustainable energy production_) remains one of the most represented technologies (26%). Compared to the group of innovators, however, the two sub-categories related to _Environmental management_ are significantly better represented, accounting for 28% (1.l, _air/water/soil pollution_) and 25% (1.2, _waste management_), respectively.
+
+Figure 2: Cleantech innovators by technological categories
+
+#### By geography
+
+Examining the spatial distribution of Cleantech companies provides valuable insights for policymakers, investors, and Cleantech firms themselves. It helps in identifying clusters, understanding regional advantages, evaluating policy effectiveness, identifying market gaps, and informing strategic planning and resource allocation decisions.
+
+More than half of Cleantech companies (5I.18%) are located in just three countries: Germany (18.65%), Italy (17.85%), and France (14.53%), with the remaining companies distributed over the other European countries according to the data provided in Table 2. No significant differences appear in the geographical distribution of Cleantech innovators and Cleantech ecosystem companies. Figure 4 and Figure 5 illustrate the regional distribution of Cleantech firms by NUTS-3 area, respectively for Cleantech innovators and Cleantech ecosystem. The regional distribution maps reveal a dense concentration of Cleantech companies in Europe's traditional VC hubs (see Kraemer-Eis et al., 2016).
+
+Figure 5: Cleantech innovators + ecosystem by technological categories
+
+\begin{table}
+\begin{tabular}{c c c c c c c} \hline \hline  & \multicolumn{2}{c}{**Cleantech companies**} & \multicolumn{2}{c}{**Cleantech Innovators**} & \multicolumn{2}{c}{**Cleantech ecosystem**} \\  & \# companies & \% & \# companies & \% & \# companies & \% \\ \hline _Germany_ & _4,444_ & 18.7\% & 515 & 17.5\% & 5,929 & 18.9\% \\ _Italy_ & 4,254 & 17.9\% & 559 & 18.7\% & 3,695 & 17.7\% \\ _France_ & 5,414 & 14.3\% & 371 & 12.4\% & 3,043 & 14.6\% \\ _Spain_ & 2,072 & 8.7\% & 529 & 11\% & 1,743 & 8.4\% \\ _Poland_ & 1,443 & 6.1\% & 152 & 5.1\% & 1,291 & 6.2\% \\ _Sweden_ & 845 & 5.6\% & 141 & 4.7\% & 704 & 5.4\% \\ _Czech Republic_ & 745 & 3.1\% & 99 & 5.3\% & 644 & 3.1\% \\ _Belgium_ & 706 & 2.9\% & 101 & 5.4\% & 605 & 2.9\% \\ _Norway_ & 677 & 2.8\% & 79 & 2.7\% & 598 & 2.9\% \\ _Austria_ & 598 & 2.5\% & 85 & 2.9\% & 515 & 2.5\% \\ _Romania_ & 550 & 2.3\% & 47 & 1.6\% & 503 & 2.4\% \\ _Finland_ & 500 & 2.1\% & 71 & 2.4\% & 429 & 2.1\% \\ _Portugal_ & 456 & 1.9\% & 47 & 1.6\% & 409 & 2\% \\ _Hungary_ & 415 & 1.7\% & 30 & 1\% & 585 & 1.8\% \\ _Netherlands_ & 587 & 1.6\% & 66 & 2.2\% & 521 & 1.5\% \\ _Denmark_ & 534 & 1.4\% & 51 & 1.7\% & 285 & 1.4\% \\ _Bulgaria_ & 512 & 1.3\% & 27 & 0.9\% & 285 & 1.4\% \\ _Slovakia_ & 267 & 1.1\% & 29 & 1\% & 258 & 1.1\% \\ _Serbia_ & 239 & 1\% & 18 & 0.6\% & 221 & 1.1\% \\ _Greece_ & 226 & 0.9\% & 41 & 1.4\% & 185 & 0.9\% \\ _Croatia_ & 192 & 0.8\% & 24 & 0.8\% & 168 & 0.8\% \\ _Lithuania_ & 155 & 0.6\% & 18 & 0.6\% & 155 & 0.7\% \\ _Slovenia_ & 151 & 0.6\% & 24 & 0.8\% & 127 & 0.6\% \\ _Larvia_ & 112 & 0.5\% & 5 & 0.2\% & 107 & 0.5\% \\ _Estonia_ & 85 & 0.4\% & 15 & 0.4\% & 70 & 0.3\% \\ _United Kingdom_ & 70 & 0.5\% & 22 & 0.7\% & 48 & 0.2\% \\ _Luxembourg_ & 45 & 0.2\% & 7 & 0.2\% & 38 & 0.2\% \\ _North Macedonia_ & 43 & 0.2\% & 2 & 0.1\% & 41 & 0.2\% \\ _Switzerland_ & 41 & 0.2\% & 3 & 0.1\% & 38 & 0.18\% \\ _ Iceland_ & 15 & 0.06\% & 1 & 0.03\% & 14 & 0.07\% \\ _Malta_ & 15 & 0.05\% & 5 & 0.1\% & 10 & 0.05\% \\ _Turkey_ & 15 & 0.05\% & 3 & 0.1\% & 10 & 0.05\% \\ _Montenegro_ & 11 & 0.05\% & 0 & 0\% & 11 & 0.05\% \\ _ Ireland_ & 5 & 0.02\% & 1 & 0.03\% & 4 & 0.02\% \\ _Cyprus_ & 1 & 0.00\% & 1 & 0.03\% & 0 & 0\% \\ \hline _Total_ & 25,828 & 100\% & 2,985 & 100\% & 20,845 & 100\% \\ \hline \hline \end{tabular}
+\end{table}
+Table 2: Distribution of Cleantech companies by countryFigure 4: Geographic distribution of Cleantech innovators by NUTS-3 area
+
+To assess the prevalence of regional technological specialisation patterns, the Balassa-index was calculated for each NUTS5-region (Figure 6 for innovators and Figure 7 for ecosystem companies). The Balassa-index is an empirical proxy for regional specialisation and is calculated for each region, \(r_{0}\), and technology, \(j\), as follows:
+
+\[BI_{j}^{r_{0}}=\frac{companies_{j}^{r}/\sum_{j}^{j}companies_{j}^{r}}{\sum_{r}^{ R}companies_{j}^{r}/\sum_{j}^{j}\sum_{r}^{R}companies_{j}^{r}}\]
+
+Figure 5: Geographic distribution of Cleantech ecosystem companies by NUTS-3 area
+
+The index exceeds one if the extend of regional concentration for a specific technology exceeds the concentration of the sample average, and thereby is assumed to reveal a region's relative technological strength (Soete, 1987), and hence, indicate a comparative production advantage for a specific clean technology. In this context, Figure 6 and Figure 7 illustrate for each NUTS-3 region the technology category with the highest index value, and therefor, the technology category in which the region has a revealed comparative advantage.
+
+#### By sector
+
+This section illustrates the cross-sectoral nature of Cleantech, by describing the distribution of companies over the different NACE12 rev.2 section. Cleantech companies are indeed active across a wide range of sectors and some interesting conclusions regarding sectoral concentration emerge.
+
+When considering the entire sample (Table 3, columns 2 and 3), the majority of Cleantech companies (innovators + ecosystem) operate in the manufacturing (C), wholesale and retail trade (G), water supply and waste management (E), and construction (F) sectors. Focusing only on Cleantech innovators (Table 3, columns 4 and 5), there is a significantly stronger concentration in manufacturing (42.91%), which indicates that Cleantech innovation occurs predominantly in hardware-intensive sectors. Examining in closer detail the sectoral distribution of Cleantech innovators, by looking at 4-digit NACE codes, we observe some narrow sectors with a relatively
+
+Figure 7: Regional specialisation patterns of Cleantech ecosystem companies by technological category and NUTS-3 area*dense concentration of Cleantech innovators. For example, 8.52% of Cleantech innovators operate in 35.II NACE code (i.e. Production of electricity), while another 6.2% belong to the 71.12 NACE code (Engineering activities and related technical consultancy). Other NACE 4-digit code with a significant overrepresentation of Cleantech innovators are 46.69 (Wholesale of other machinery and equipment), 27.II (Manufacture of electric motors, generators and transformers), 45.21 (Electrical installation) and 28.29 (Manufacturing of other general-purpose machinery n.e.c.), which all represent around 2.5% of the Cleantech innovators sample.
+
+\begin{table}
+\begin{tabular}{c c c c c c c} \hline \hline
+**NACE rev.2 section** & \multicolumn{2}{c}{**Cleantech companies**} & \multicolumn{2}{c}{**Cleantech innovators**} & \multicolumn{2}{c}{**Cleantech ecosystem**} \\  & \# _companies_ & \% & \# _companies_ & \% & \# _companies_ & \% \\ \hline _A - Agriculture, forestry and fishing_ & 171 & 0.7\% & 17 & 0.6\% & 154 & 0.7\% \\ _B - Mining and quarrying_ & 171 & 0.7\% & 9 & 0.5\% & 162 & 0.8\% \\ _C - Manufacturing_ & 5,686 & 25.9\% & 1,281 & 42.9\% & 4,405 & 21.1\% \\ _D - Electricity, gas, steam and air_ & & & & & & \\ _conditioning supply_ & 1,917 & 8\% & 318 & 10.7\% & 1,599 & 7.7\% \\ _E - Water supply; sewage, waste_ & & & & & & \\ _management and remediation activities_ & 5,759 & 15.8\% & 140 & 4.7\% & 5,619 & 17.4\% \\ _F - Construction_ & 5,376 & 14.2\% & 265 & 8.9\% & 3,III & 14.9\% \\ _G - Wholesale and retail trade; repair of motor vehicles and motorcycles_ & 4,792 & 20.1\% & 569 & 12.4\% & 4,425 & 21.2\% \\ _H - Transportation and storage_ & 344 & 1.4\% & 18 & 0.6\% & 526 & 1.6\% \\ _I - Accommodation and food service activities_ & 84 & 0.4\% & 9 & 0.5\% & 75 & 0.4\% \\ _J - Information and communication_ & 206 & 0.9\% & 28 & 0.9\% & 178 & 0.9\% \\ _K - Financial and insurance activities_ & 590 & 1.6\% & 75 & 2.5\% & 515 & 1.5\% \\ _L - Real estate activities_ & 280 & 1.2\% & 29 & 1\% & 251 & 1.2\% \\ _M - Professional, scientific and technical activities_ & 1,446 & 6\% & 359 & 12\% & 1,087 & 5.2\% \\ _N - Administrative and support service activities_ & 968 & 4\% & 48 & 1.6\% & 920 & 4.4\% \\ _O - Public administration and defence; compulsory social security_ & 21 & 0.1\% & 2 & 0.1\% & 19 & 0.1\% \\ _P - Education_ & 28 & 0.1\% & 0 & 0\% & 28 & 0.1\% \\ _Q - Human health and social work activities_ & 71 & 0.5\% & 5 & 0.2\% & 66 & 0.5\% \\ _R - Arts, entertainment and recreation_ & 57 & 0.2\% & 5 & 0.1\% & 54 & 0.2\% \\ _S - Other service activities_ & 81 & 0.5\% & 10 & 0.5\% & 71 & 0.5\% \\ _Total_ & 25,828 & 100\% & 2,985 & 100\% & 20,845 & 100\% \\ \hline \hline \end{tabular} _Source: Orbis, authors’ calculations_
+
+\end{table}
+Table 3: Distribution of Cleantech companies by industry (NACE rev. 2)
+
+\begin{table}
+\begin{tabular}{c c c c c c c c c c c c c c} \hline \hline \multicolumn{11}{c}{**Technological categories\({}^{\bullet}\)**} \\ \hline
+**NACE rev.2 Section** & \(J\) & \(2\) & \(3\) & \(4\) & \(5\) & \(6\) & \(7\) & _10.0_ & \(5\) & \(6\) & \(7\) & _10.0_ \\ \hline _A - agriculture, diversity and fishing_ & 75 & 0.6\% & 69 & 2.5\% & 73 & 0.6\% & 0 & 0.0\% & 0 & 0.0\% & 11 & 0.5\% & 7 & 1.0\% \\ _B - Mining and quantifying_ & 84 & 0.7\% & 25 & 0.8\% & 67 & 0.6\% & 5 & 29.4\% & 0.0\% & 9 & 0.4\% & 12 & 1.7\% \\ _C - Manufacturing_ & 2416 & 19.4\% & 712 & 23.5\% & 296 & 20.3\% & 0 & 0.0\% & 129 & 47.4\% & 838 & 35.9\% & 150 & 21.8\% \\ _D - Electricity, gas, storm and radio conditions supply_ & 295 & 2.4\% & 118 & 53.9\% & 1754 & 14.9\% & 0 & 0.0\% & 8 & 2.9\% & 29 & 1.2\% & 98 & 14.3\% \\ _E - Water supply; sewage, water management and remediation activities_ & 3614 & 29\% & 418 & 15.7\% & 1708 & 14.5\% & 0 & 0.0\% & 1 & 0.4\% & 19 & 0.8\% & 8 & 1.2\% \\ _F - Construction_ & 1281 & 10.3\% & 669 & 21.9\% & 1590 & 13.5\% & 1 & 5.9\% & 19 & 7.0\% & 455 & 19.5\% & 63 & 9.2\% \\ _G - Wholesale and retail trade; repair of motor vehicles and motorcycles_ & 2680 & 21.5\% & 469 & 15.5\% & 1936 & 1.5\% & 1 & 5.9\% & 45 & 15.8\% & 722 & 30.9\% & 26 & 25.9\% \\ _H - Transportation and storage_ & 199 & 1.6\% & 54 & 1.1\% & 145 & 1.2\% & 0 & 0.0\% & 11 & 4.0\% & 20 & 0.0\% & 25 & 5.3\% \\ _I - Accommodation and food service activities_ & 59 & 0.5\% & 15 & 0.5\% & 54 & 0.5\% & 0 & 0.0\% & 1 & 0.4\% & 15 & 0.6\% & 1 & 0.1\% \\ _J - Information and communication_ & 92 & 0.7\% & 18 & 0.6\% & 107 & 0.9\% & 0 & 0.0\% & 9 & 5.3\% & 27 & 1.2\% & 9 & 1.5\% \\ _K - Financial and insurance activities_ & 156 & 1.2\% & 34 & 1.1\% & 235 & 2.0\% & 5 & 17.6\% & 7 & 2.6\% & 27 & 1.2\% & 17 & 2.5\% \\ _L - Realerate activities_ & 141 & 1.1\% & 34 & 1.1\% & 148 & 1.5\% & 0 & 0 & 2.0\% & 2 & 0.7\% & 25 & 1.1\% & 11 & 1.6\% \\ _M - Professional, scientific and technical activities_ & 601 & 4.8\% & 187 & 6.1\% & 888 & 7.6\% & 4 & 25.5\% & 54 & 12.5\% & 89 & 5.8\% & 42 & 6.1\% \\ _N - Administration and support service activities_ & 662 & 5.5\% & 212 & 6.9\% & 259 & 2.2\% & 2 & 11.8\% & 6 & 2.2\% & 27 & 1.2\% & 12 & 1.7\% \\ _O - Public-administration and defence: compulsory social security_ & 9 & 0.1\% & 1 & 0.0\% & 6 & 0.1\% & 1 & 5.9\% & 0 & 0.0\% & 5 & 0.1\% & 2 & 0.3\% \\ _P - Education_ & 14 & 0.1\% & 5 & 0.2\% & 9 & 0.1\% & 0 & 0.0\% & 0 & 0.0\% & 6 & 0.5\% & 2 & 0.5\% \\ _Q - Human health and social work activities_ & 40 & 0.5\% & 14 & 0.5\% & 29 & 0.2\% & 0 & 0.0\% & 1 & 0.4\% & 4 & 0.2\% & 2 & 0.3\% \\ _R - Arts, entertainment and recreation_ & 26 & 0.2\% & 5 & 0.2\% & 12 & 0.1\% & 0 & 0.0\% & 0 & 0.0\% & 3 & 0.1\% & 0 & 0.0\% \\ _S - Other service activities_ & 37 & 0.5\% & 17 & 0.6\% & 48 & 0.4\% & 0 & 0.0\% & 1 & 0.4\% & 5 & 0.2\% & 2 & 0.5\% \\ \hline \hline \end{tabular} \({}^{\bullet}\)1: Environmental management, 2. Resources preservation, 3. Industrial energy management, 4. Capture, storage, sequestration or disposal of GHG, 5. Sustainable modes of transport, 6. Sustainable buildings, 7. Other categories
+
+\end{table}
+Table 4: Distribution of Cleantech companies (innovators + ecosystem) by industry (NACE rev. 2) and technological categoriesTable 4 illustrates the sectoral distribution (according to the NACE rev.2 classification) of the entire sample of Cleantech companies for the technological categories defined in section 2.3.1. Companies active in our largest category, _Environmental management_ (category 1) are predominantly active in the NACE sector water supply and waste management (29%), wholesale (21.5%) and manufacturing (19.4%). Concerning Cleantech companies active in _Industrial energy management_ (category 3), the second largest technological category, the NACE sector manufacturing accounts for over 1 in 5 companies (22.96%), while electricity, gas, steam and air conditioning supply, water supply and waste management, construction and wholesale each account for around 15% of _industrial energy management_ companies. Finally, companies active in _Resources preservation_ (category 2), the third largest technological category, operate mostly in manufacturing (23.3%), construction (21.9%), wholesale (15.3%) and water supply and waste management (15.7%).
+
+### 3.1.4 By year of incorporation
+
+While interest in Cleantech has experienced a strong surge in recent years, driven, among other things, by evolutions on the regulatory front, environmental technology is not a new phenomenon and predates the current green regulatory wave. This is confirmed by our data, as illustrated in Table 4, which illustrates the distribution of Cleantech companies by year of incorporation and shows that over half (65.77%) of the companies were founded in the previous decennium, prior to the first Cleantech investment wave.
+
+Noteworthy is the gradual decline in the number of Cleantech companies after 2010. One potential explanation for initial downward trend is the global economic downturn that occurred during this period, commonly referred to as the "cleantech crash" when the aftermath of the Great Financial Crisis led to reduced investment and funding opportunities for innovative companies. These challenges were further aggravated by the sovereign debt crisis, as public budgetary constraints led to reduced incentives and subsidies for green technology, creating a less favorable environment for Cleantech to flourish. Similarly, the table shows a drop from 2016 onwards explained by the methodological approach adopted for constructing the initial sampling based on censoring of the most recent companies. This choice was driven by the need to track the evolution of these companies over time for a significant number of years.
+
+\begin{table}
+\begin{tabular}{c c c c c c c} \hline \multirow{2}{*}{**Year of incorporation**} & \multicolumn{2}{c}{**Cleantech companies**} & \multicolumn{2}{c}{**Cleantech innovators**} & \multicolumn{2}{c}{**Cleantech ecosystem**} \\  & \(\#\) _companies_ & \% & \(\#\) _companies_ & \% & \(\#\) _companies_ & \% \\ \hline _Before980_ & 4,526 & 18.1\% & 529 & 17.7\% & 5.797 & 18.2\% \\
+1981-985 & 1,548 & 5.7\% & 145 & 4.8\% & 1.205 & 5.8\% \\
+1986-990 & 2,508 & 9.7\% & 257 & 8.6\% & 2.051 & 9.8\% \\
+1994-995 & 5,805 & 16\% & 350 & 11.7\% & 5.455 & 16.6\% \\
+1996-2000 & 5,409 & 14.3\% & 446 & 15.9\% & 2.995 & 14.4\% \\
+2000-2005 & 5,277 & 15.8\% & 435 & 14.5\% & 2.844 & 15.6\% \\
+2006-2000 & 5,320 & 15.9\% & 560 & 18.8\% & 2.760 & 15.2\% \\
+2001-2015 & 1,669 & 7\% & 250 & 8.4\% & 1.419 & 6.8\% \\
+2016 onwards & 568 & 1.5\% & 47 & 1.6\% & 521 & 1.5\% \\ \hline _Total_ & 25,828 & 100\% & 2,985 & 100\% & 20,843 & 100\% \\ \hline \end{tabular}
+\end{table}
+Table 4: Distribution of Cleantech companies by year of incorporation By plotting the evolution of Cleantech start-ups by technological category, Figure 8 reveals diverging trends in the emergence (and decline) of specific green technologies. Interestingly, the declining trend in the number of Cleantech firm births initiated already prior to 2010 in all but two categories: _sustainable energy production_ (5.1) and _sustainable fuels_ (5.2), as both sectors flourished beyond 2010, although their exponential growth was eventually countered by the financial crisis as well.
+
+## 5.2 Patent data
+
+Patents play a crucial role in analysing the innovative potential of Cleantech companies, providing valuable insights into their technological advancements and competitive advantage. Examining patterns in Cleantech patenting activity allows to assess their capacity to develop novel solutions, thereby addressing environmental challenges and driving sustainable practices.
+
+Starting from the identified sample of Cleantech companies, we matched firm-level data with patent data in the Orbis Intellectual Property (Orbis IP) database by using the Bureau van Dijk
+
+Figure 8: Evolution of Cleantech start-ups by technological category (1981-2015)
+
+company identifiers. We selected all patent applications filed by our sample companies at the European Patent Office (EPO) to ensure that the data is comparable across countries. Table 5 illustrates the distribution of EPO patenting Cleantech companies for Cleantech innovators and ecosystem companies. Just over 2,700 companies (II.3% of the sample) filed at least one EPO patent. Cleantech innovators appear to patent inventions at a significantly higher rate than the ecosystem companies.
+
+To retrieve additional information on patenting activity (e.g., application dates, technological codes, etc.), the publication number of the patents collected from Orbis IP are matched to those in the Worldwide Patent Statistical Database (PATSTAT) of the EPO.15 In particular, we identified those patents that report a Cooperative Patent Classification (CPC) code equal to Y02, indicating the technologies or applications for mitigation or adaptation against climate change (Climate Change Mitigation Technologies, CCMT). Among patenting Cleantech companies (2,705), 43.1% have at least one patent in a CCMT-related field. Distinguishing between the segments of Innovators and ecosystem companies, this share becomes 61.9% and 35.5%, respectively.
+
+Footnote 15: We used the Autumn Edition of 2021.
+
+The patenting intensity of specific technology categories typically depends on a number of factors, such as the technology's novelty, its market potential, the intellectual property landscape it operates in, regulatory considerations, or strategic motives. Novel and inventive technologies with commercial potential are more likely to be eligible for patents.
+
+Table 6 and Table 7 report the distribution of EPO patenting firms by technological category for the two sub-samples of companies belonging to Cleantech innovators and the Cleantech ecosystem, respectively. The technological category with the largest share of patenting companies is that of _Sustainable raw materials_ (2.5) in the former sample and that of _Sustainable modes of transport_ (5) in the latter one. We also computed the share of patenting firms that filed at least one patent application in a CCMT field, for each technological category. After excluding the smallest domains in terms of the number of firms, the technological category with the largest proportion of companies with CCMT patents is that of _Sustainable fuels_ (3.2) in the sub-sample of Cleantech innovators and _Sustainable modes of transport_ (5) in the sub-sample of Cleantech ecosystem.
+
+\begin{table}
+\begin{tabular}{c c c c c c c} \hline \hline  & **Cleantech companies** & \multicolumn{2}{c}{**Cleantech innovators**} & \multicolumn{2}{c}{**Cleantech ecosystem**} \\  & \# companies & \% & \# companies & \% & \# companies & \% \\ \hline _At least one in any field_ & 2,705 & II.59\%* & 792 & 26.59\%* & 1,915 & 9.29\%* \\ _At least one in a CCMT field_ & 1,166 & 45.19\%** & 490 & 61.99\%** & 676 & 35.59\%** \\ \hline \hline \end{tabular}
+
+*Of all Cleantech companies
+*Of patenting Cleantech companies
+
+\end{table}
+Table 5: EPO patenting activity of Cleantech companies
+
+\begin{table}
+\begin{tabular}{c c c c c} \hline \hline  & \multicolumn{2}{c}{**At least one EPO patent**} & \multicolumn{2}{c}{**At least one EPO patent**} \\
+**Technological category** & \multicolumn{2}{c}{**in any field**} & \multicolumn{2}{c}{**in a CCMT field**} \\  & \(\#\)_companies_ & \%**\({}^{**}\) & \(\#\)_companies_ & \%**\({}^{***}\) \\ \hline _Air/water/soil pollution abatement/remediation (I.l)_ & 158 & 52.4\% & 75 & 52.9\% \\ _Waste management (I.2)_ & 102 & 29.4\% & 59 & 57.8\% \\ _Water conservation/availability (I.l)_ & 24 & 25\% & 5 & 20.8\% \\ _Sustainable agri-food technologies (I.2)_ & 25 & 25.8\% & 9 & 36\% \\ _Sustainable raw materials (I.3)_ & 34 & 44.7\% & 18 & 52.9\% \\ _Sustainable energy production (3.l)_ & 284 & 21.2\% & 221 & 77.8\% \\ _Sustainable fuels (3.2)_ & 27 & 20.2\% & 23 & 85.2\% \\ _Energy-efficient industrial technologies (3.5)_ & 145 & 35.6\% & 87 & 60\% \\ _Capture, storage, sequestration or disposal of CHG (4)_ & 2 & 40\% & 2 & 100\% \\ _Sustainable modes of transport (5)_ & 36 & 40\% & 24 & 66.7\% \\ _Sustainable buildings (6)_ & 128 & 27\% & 61 & 47.7\% \\ _Others_ & 0 & & 0 & \\ _Total_ & 792 & 26.5\% & 490 & 61.9\% \\ \hline \hline \end{tabular}
+
+* Each company can be associated to multiple technological categories; hence, the totals are not the sum of the row values.
+* Of all Cleantech companies
+* Of patenting Cleantech companies
+
+\end{table}
+Table 6: Distribution of EPO patenting Cleantech companies by technological category in the segment of Cleantech innovators*
+
+\begin{table}
+\begin{tabular}{c c c c c} \hline \hline  & \multicolumn{2}{c}{**At least one EPO patent**} & \multicolumn{2}{c}{**At least one EPO patent**} \\
+**Technological category** & \multicolumn{2}{c}{**in any field**} & \multicolumn{2}{c}{**in a CCMT field**} \\  & \(\#\)_companies_ & \%**\({}^{**}\) & \(\#\)_companies_ & \%**\({}^{***}\) \\ \hline _Air/water/soil pollution abatement/remediation (I.l)_ & 591 & 9.6\% & 191 & 52.5\% \\ _Waste management (I.2)_ & 369 & 6.7\% & 115 & 51.2\% \\ _Water conservation/availability (I.l)_ & 164 & 15.5\% & 69 & 42.1\% \\ _Sustainable agri-food technologies (I.2)_ & 68 & 5.9\% & 19 & 27.9\% \\ _Sustainable raw materials (I.3)_ & 72 & 17.7\% & 24 & 35.3\% \\ _Sustainable energy production (3.l)_ & 462 & 9.7\% & 206 & 44.6\% \\ _Sustainable fuels (3.2)_ & 155 & 11.6\% & 71 & 45.8\% \\ _Energy-efficient industrial technologies (3.3)_ & 327 & 8.6\% & 125 & 37.6\% \\ _Capture, storage, sequestration or disposal of GHG (4)_ & 1 & 8.5\% & 1 & 100\% \\ _Sustainable modes of transport (5)_ & 38 & 20.9\% & 19 & 50\% \\ _Sustainable buildings (6)_ & 186 & 10\% & 67 & 36\% \\ _Others_ & 59 & 8.6\% & 18 & 30.5\% \\ \hline _Total_ & 1,915 & 9.2\% & 676 & 35.3\% \\ \hline \hline \end{tabular}
+
+* each company can be associated to multiple technological categories; hence, the totals are not the sum of the row values.
+* Of all Cleantech companies
+* Of patenting Cleantech companies
+
+\end{table}
+Table 7: Distribution of EPO patenting Cleantech companies by technological category in the segment of Cleantech ecosystem*The innovative capacity of a local Cleantech ecosystem differs between countries. According to Table 8, Austria's Cleantech companies engage most intensely in patented innovation, with 22.2% of Cleantech companies owning at least one patented innovation. Sweden follows closely behind with 19.4%, while Germany ranks third with 17.7%. When specifically considering EPO patents in the CCMT fields, Austria also emerges as the leading country, with 50.4% of the patenting companies having at least one EPO patent in a CCMT field. Spain takes the second position with 48.4%, closely followed by Germany with 48.2%. The data highlights the strong performance of Austria in both overall EPO patenting by Cleantech companies and specifically in the CCMT fields. This suggests that Austria's Cleantech ecosystem is particularly innovation-intensive.
+
+Innovative economic activities tend to cluster spatially due to knowledge spill-overs and access to skilled labour, among other things. Clustering facilitates the exchange of ideas, promotes efficiency and creates scale effects in innovative activities. Figures 9 illustrates, respectively, the geographic distribution of the share of patenting firms in the sub-samples of Cleantech innovators and Cleantech ecosystem by NUTS-3 area and indeed reveals clear clustering patterns in patenting intensity. The share of patenting tends to be higher in areas with more Cleantech activity, typically around Europe's traditional VC-hubs.
+
+\begin{table}
+\begin{tabular}{c c c c c} \hline \hline  & \multicolumn{2}{c}{**At least one EPO patent**} & \multicolumn{2}{c}{**At least one EPO patent**} \\
+**Country** & \multicolumn{2}{c}{**in any field**} & \multicolumn{2}{c}{**in a CCMT field**} \\  & \#_companies_ & \%\({}^{*}\) & \#_companies_ & \%\({}^{**}\) \\ \hline _Germany_ & 786 & 17.7\% & 379 & 48.2\% \\ _Italy_ & 558 & 15.1\% & 186 & 35.3\% \\ _France_ & 259 & 7.6\% & 95 & 36.7\% \\ _Spain_ & 182 & 8.8\% & 88 & 48.4\% \\ _Poland_ & 59 & 4.1\% & 17 & 28.8\% \\ _Sweden_ & 164 & 19.4\% & 75 & 44.5\% \\ _Czech Republic_ & 54 & 4.6\% & 15 & 44.1\% \\ _Belgium_ & 88 & 12.5\% & 51 & 35.2\% \\ _Norway_ & 70 & 10.3\% & 51 & 44.5\% \\ _Austria_ & 135 & 22.2\% & 67 & 50.4\% \\ _Others\({}^{***}\)_ & 365 & 7.9\% & 181 & 49.6\% \\ \hline _Total_ & 2,698 & 11.5\% & 1,165 & 45.1\% \\ \hline \hline \end{tabular} \({}^{*}\)Of all Cleantech companies in a given country.
+
+\({}^{**}\)Of patenting Cleantech companies in a given country.
+
+\({}^{**}\)The residual category includes Romania, Finland, Portugal, Hungary, Netherlands, Denmark, Bulgaria, Slovakia, Serbia, Greece, Croatia, Lithuania, Slovenia, Latvia, Estonia, United Kingdom, Luxembourg, North Macedonia, Switzerland, Iceland, Malta, Turkey, Montenegro, Ireland, and Cyprus; the information on the NUTS area is missing for 7 patenting companies.
+
+\end{table}
+Table 8: Distribution of EPO patenting Cleantech companies by country Finally, patenting intensity also differs depending on the ecosystem segments identified in section 2.3 (Table 9). _Experimenters_ engage most intensely in patenting activity (50.1%). They are followed by _Innovators_ (26.49%) and _Manufacturers_ (21.91%).
+
+Figure 9: The share of patenting Cleantech companies by NUTS3 area
+
+## Chapter 3 Financial KPIs
+
+By collecting information on several essential financial KPIs from Orbis, we are able to construct a more detailed overview on the average scale of the Cleantech companies in our sample (Table 10). There were 259,450 data points relating to 23,828 Cleantech companies over the period 2009 until 2022, with a company being covered for an average time span of 10 years.
+
+In Table 2, we report the mean values of the main accounting variables separately for Cleantech innovators and Cleantech ecosystem companies. We also performed a t-test comparison, as reported in the last columns of the table below, reporting differences and significance. Cleantech innovators typically operate at a larger scale, compared to their ecosystem counterparts.
+
+\begin{table}
+\begin{tabular}{c c c c c c c} \hline \hline  & \multicolumn{6}{c}{**Cleantech companies**} \\  & \# obs & _Mean_ & _Median_ & _St. dev._ & _Min_ & _Max_ \\ \hline _Sales (0000€)_ & 259,450 & 149,157 & 9,707 & 2,474,602 & 0 & 291,000,000 \\ _Total assets (000€)_ & 184,867 & 196,288 & 8,664 & 5,442,078 & 0 & 285,000,000 \\ _Net profit (000€)_ & 251,074 & 5,419 & 195 & 145,218 & -16,500,000 & 19,900,000 \\ _EBITDA (000€)_ & 218,641 & 18,541 & 695 & 372,836 & -7,245,000 & 40,100,000 \\ _\# Employees_ & 190,540 & 413 & 48 & 5,980 & 0 & 291,000 \\ \hline \hline \end{tabular} _Source: Orbis, authors’ calculations_
+
+\end{table}
+Table 10: Descriptive statistics for selected financial KPIs for the full sample of Cleantech companies
+
+\begin{table}
+\begin{tabular}{c c c c c} \hline \hline  & \multicolumn{2}{c}{**At least one EPO patent**} & \multicolumn{2}{c}{**At least one EPO patent**} \\  & \multicolumn{2}{c}{**in any field**} & \multicolumn{2}{c}{**in a CCMT field**} \\
+**Category** & \(\#\)_companies_ & \(\%^{*}\) & \(\#\)_companies_ & \(\%^{**}\) \\ \hline _Innovators_ & 792 & 26.49\% & 490 & 61.87\% \\ _Experimenters_ & 31 & 50.10\% & 11 & 35.48\% \\ _Manufacturers_ & 1,179 & 21.91\% & 396 & 35.59\% \\ _Distributors_ & 174 & 5.21\% & 56 & 52.18\% \\ _Integrators_ & 507 & 4.68\% & 106 & 54.53\% \\ _Operators_ & 222 & 4.04\% & 107 & 48.20\% \\ \hline _Total_ & _2,705_ & _II.54\%_ & _I.166_ & _43.1\%_ \\ \hline \hline \end{tabular}
+
+*Of all Cleantech companies.
+
+*Of patenting Cleantech companies.
+
+\end{table}
+Table 9: Distribution of EPO patenting Cleantech companies by ecosystem segment
+
+## 3 Feature capital investment in Cleantech companies
+
+VC financing is a crucial source of external funding for Cleantech companies. Cleantech innovations often require significant upfront investments in research and development, prototype development, and scaling up production. Venture capitalists are able to provide the necessary funding to support such high-cost activities, which may be difficult to obtain from other traditional financing sources. In addition, Cleantech companies often face longer time horizons for commercialisation and profitability, due, for example, to regulatory complexities, market adoption challenges, and technological advancements. VC investors, with their risk-tolerant approach and longer investment horizons, are well positioned to provide patient capital and support the company's growth over the long term. In addition, they bring industry expertise, networks and business guidance, which can help Cleantech companies navigate the complex landscape, access markets, and achieve scalability.
+
+Matching our data on Cleantech companies from the Orbis database with data on VC investment from VICO 4.0,14 a pan-European dataset on VC investment activity developed by the RISIS2 EU-funded Horizon 2020 project (comprising more than 54,910 European VC investment deals), allows us to develop a better understanding of the role of VC in European Cleantech development. Table 15 illustrates the involvement of VC investors in the Cleantech companies identified in Orbis.
+
+Footnote 14: The VICO dataset collects VC deals as contained in the commercial databases Zephyr, Crunchbase and Thomson Eikon. For more information, see [https://rcrrisi2.eu/dataset/2/metadata](https://rcrrisi2.eu/dataset/2/metadata).
+
+A total of 170 companies (0.71% of the 23,828 Cleantech companies) received at least one investment from VC investors. Unsurprisingly, VC involvement is substantially larger for Cleantech innovators (2.2%), compared to the ecosystem companies (0.5%). These relatively modest shares evidence that our identification methodology and resulting database is complementary to existing investment-based databases.
+
+\begin{table}
+\begin{tabular}{c c c c c}  & **Cleantech innovators** & **Cleantech ecosystem** & **Difference** & **Significance-level\({}^{*}\)** \\ \hline _Sales (000\({}^{\circ}\)C)_ & 215,395 & 159,534 & 75,860 & (\({}^{**}\)) \\ _Total assets (000\({}^{\circ}\)C)_ & 258,346 & 187,577 & 70,969 & (\({}^{**}\)) \\ _Net profit (000\({}^{\circ}\)C)_ & 6,584 & 5,278 & 1,107 & \\ _EBITDA (000\({}^{\circ}\)C)_ & 22,659 & 17,945 & 4,716 & (\({}^{**}\)) \\ _\# Employees_ & 688 & 572 & 517 & (\({}^{**}\)) \\ \hline \end{tabular} \({}^{*}\)(\({}^{*}\)) and (\({}^{**}\)) indicate significantly different means at the 59\(\%\)- and 1\(\%\)-level respectively.
+
+\end{table}
+Table 1: Mean values for selected financial KPIs: Innovators vs EcosystemTablesTable 14 andTable 15 report the distribution of VC-backed companies by technological category for the two sub-samples of companies belonging to Cleantech innovators and the Cleantech ecosystem, respectively. In both samples, the category with the highest share of VC-backed companies is "_Sustainable energy production_ (5.1)". Moreover, VC-involvement is particularly prevalent for Cleantech innovator active in the technological category "_Energy-efficient industrial technologies_ (5.3)". These findings align with a recent EIF report (de Haan Montes et al., 2025) that analysed Cleantech VC deals from the Pitchbook database and found that energy-related Cleantech companies represent a substantial portion of Cleantech VC and PE growth investment activity across the EU.
+
+\begin{table}
+\begin{tabular}{c c c} \hline \hline \multicolumn{3}{c}{**VC-backed companies**} \\ \multicolumn{1}{c}{**Technological category**} \\ \multicolumn{1}{c}{\(\#\)_companies_} & \% \\ \hline _Air/water/soil pollution abatement/remediation (I.1)_ & 5 & 7.6\% \\ _Waste management (I.2)_ & 4 & 6.1\% \\ _Water conservation/availability (I.1)_ & 0 & 0\% \\ _Sustainable agri-food technologies (2.2)_ & 1 & 1.5\% \\ _Sustainable raw materials (2.3)_ & 4 & 6.1\% \\ _Sustainable energy production (5.1)_ & 56 & 54.6\% \\ _Sustainable fuels (5.2)_ & 4 & 6.1\% \\ _Energy-efficient industrial technologies (3.3)_ & 17 & 25.8\% \\ _Capture, storage, sequestration or disposal of GHG (4)_ & 0 & 0\% \\ _Sustainable modes of transport (5)_ & 0 & 0\% \\ _Sustainable buildings (6)_ & 6 & 9.1\% \\ _Others_ & 0 & 0\% \\ \hline _Total_ & 66 & 2.2\% \\ \multicolumn{3}{l}{\({}^{*}\)Each company can be associated to multiple technological categories; hence, the totals are not the sum of the row values.} \\ \end{tabular}
+\end{table}
+Table 13: Distribution of VC-backed Cleantech innovator companies by technological category Within the group of Cleantech ecosystem companies, two additional technological categories, namely "_Air/water/soil pollution abatement/remediation_ (I.l)" and _"Waste management_ (1.2)", exhibit a comparable level of VC financing as the "_Energy-efficient industrial technologies_ (3.5)" sub-category. Approximately 18-19% of VC-backed companies in the Cleantech ecosystem belong to these categories, indicating that aside from supporting energy-related technology, VC investors also recognise the importance of solutions addressing environmental pollution and waste management challenges.
+
+Patents are important for VC investors as they provide a means to protect the intellectual property rights of innovative technologies, thereby ensuring a competitive advantage and improved growth prospects for investee companies. Patents also enhance the attractiveness of companies to potential investors, by signalling the innovative potential of the patenting company. This holds true also for green technologies (Belucci et al., 2021). The data in Table 15 presents the distribution of EPO patenting Cleantech firms categorized by their VC-backed status. Among the VC-backed firms, 5.8% of the companies have filed at least one EPO patent in any field. Notably, 65.7% of the patenting companies that received VC investments have obtained at least one EPO patent specifically in the CCMT (Clean and Climate-friendly Mobile Technologies) fields.
+
+\begin{table}
+\begin{tabular}{c c c} \hline \hline \multicolumn{3}{c}{**VC-backed companies**} \\  & \# _companies_ & \% \\ \hline _Air/water/soil pollution abatement/remediation_ (I.l) & 24 & 18.5\% \\ _Waste management_ (I.2) & 24 & 19.2\% \\ _Water conservation/availability_ (_2.l) & 4 & 5.9\% \\ _Sustainable agri-food technologies_ (_2.2_) & 2 & 1\% \\ _Sustainable raw materials_ (_2.3_) & 11 & 6.7\% \\ _Sustainable energy production_ (_3.l) & 85 & 47.1\% \\ _Sustainable fuels_ (_5.2_) & 14 & 9.6\% \\ _Energy-efficient industrial technologies_ (_3.5_) & 56 & 18.5\% \\ _Capture_, _storage, sequestration or disposal of GHG_ (_4_) & 0 & 0\% \\ _Sustainable modes of transport_ (_5_) & 3 & 2.9\% \\ _Sustainable buildings_ (_6_) & 13 & 6.7\% \\ _Others_ & 4 & 0.6\% \\ \hline _Total_ & 104 & 0.5\% \\ \hline \hline \end{tabular}
+
+* Each company can be associated to multiple technological categories; hence, the totals are not the sum of the row values.
+
+\end{table}
+Table 14: Distribution of VC-backed Cleantech ecosystem companies by technological category Table 16 reports the distribution of VC-backed Cleantech companies by country. Among the VC-backed Cleantech companies, the 23.5% is located in France, followed by Finland (18.8%), Germany (II.8%), and Sweden (8.8%). Considering only Cleantech innovators, it is worth noting that Finland holds the highest representation with 51.8% of VC-backed companies belonging to this group, followed by France (19.7%) and Estonia (15.6%). VC investment intensity, calculated as the share of Cleantech companies that received VC investments, differs significantly between countries, and ranges from less than a percentage point (Spain, 0.45%; Germany, 0.45%) to more than 10% (Estonia, 15.5%).
+
+\begin{table}
+\begin{tabular}{c c c c c c c c}  & \multicolumn{2}{c}{**Cleantech companies**} & \multicolumn{2}{c}{**Cleantech Innovators**} & \multicolumn{2}{c}{**Cleantech ecosystem**} \\
+**Country** & \multicolumn{2}{c}{\# _companies_} & \multicolumn{2}{c}{\% _of total_} & \multicolumn{2}{c}{\% _of national_} & \multicolumn{2}{c}{\# _companies_} & \multicolumn{2}{c}{\%} & \multicolumn{1}{c}{\# _companies_} & \multicolumn{1}{c}{\%} \\  & \multicolumn{2}{c}{_VC-backed_} & \multicolumn{2}{c}{_Cleantech\({}^{*}\)_} & \multicolumn{1}{c}{\# _companies_} & \multicolumn{1}{c}{\%} & \multicolumn{1}{c}{\# _companies_} & \multicolumn{1}{c}{\%} \\ \hline _France_ & 40 & 25.5\% & 1.2\% & 15 & 19.7\% & 27 & 26\% \\ _Finland_ & 32 & 18.8\% & 6.4\% & 21 & 31.8\% & 11 & 10.6\% \\ _Germany_ & 20 & 11.8\% & 0.45\% & 1 & 1.5\% & 19 & 18.3\% \\ _Sweden_ & 15 & 8.8\% & 1.8\% & 6 & 9.1\% & 9 & 8.7\% \\ _Estonia_ & 11 & 6.5\% & 15.3\% & 10 & 15.6\% & 1 & 0.96\% \\ _Austria_ & 9 & 5.3\% & 1.5\% & 7 & 10.6\% & 2 & 1.9\% \\ _Spain_ & 9 & 5.3\% & 0.43\% & 1 & 1.5\% & 8 & 7.7\% \\ _Italy_ & 5 & 2.9\% & & 1 & 1.5\% & 4 & 3.9\% \\ _Netherlands_ & 5 & 2.9\% & & 1 & 1.5\% & 4 & 3.9\% \\ _United Kingdom_ & 5 & 2.9\% & & 1 & 1.5\% & 4 & 3.9\% \\ _Belgium_ & 4 & 2.4\% & & 1 & 1.5\% & 5 & 2.9\% \\ _Denmark_ & 4 & 2.4\% & & 0 & 0\% & 4 & 3.9\% \\ _Lithuania_ & 2 & 1.2\% & & 2 & 3\% & 0 & 0\% \\ _Czech Republic_ & 1 & 0.6\% & 1 & 1.5\% & 0 & 0\% \\ _Others\({}^{**}\)_ & 8 & 4.7\% & 0 & 0\% & 8 & 7.7\% \\ \hline _Total_ & _170_ & _100\%_ & _66_ & _100\%_ & _104_ & _100\%_ \\ \hline \end{tabular} \({}^{*}\)The share of VC-backed companies in the number of national Cleantech companies is only reported for those countries with more than 5 VC-backed companies.
+
+\({}^{**}\)The residual category includes Greece, Hungary, Poland, Portugal, Slovakia and Slovenia.
+
+\end{table}
+Table 15: Distribution of EPO patenting Cleantech companies by VC-backed status Table 17 reports the distribution of VC-backed Cleantech companies by ecosystem segment. The findings reflect the fact that VC investor typically look for highly innovative companies with maximum growth potential. Hence, nearly 40% of VC-backed companies were classified as Innovators, followed by Manufacturers (28.2%) and Operators (12.9%).
+
+\begin{table}
+\begin{tabular}{c c c c c c c} \hline \hline  & \multicolumn{2}{c}{**Cleantech companies**} & \multicolumn{2}{c}{**Cleantech innovators**} & \multicolumn{2}{c}{**Cleantech ecosystem**} \\
+**Category** & \(\#\)_companies_ & \% & \(\#\)_companies_ & \% & \(\#\)_companies_ & \% \\ \hline _Innovators_ & 66 & 58.8\% & 66 & 100 \% & 0 & 0\% \\ _Experimenters_ & 1 & 0.59\% & 0 & 0\% & 1 & 0.96\% \\ _Manufacturers_ & 48 & 28.2\% & 0 & 0\% & 48 & 46.2\% \\ _Distributors_ & 15 & 8.8\% & 0 & 0\% & 15 & 14.4\% \\ _Integrators_ & 18 & 10.6\% & 0 & 0\% & 18 & 17.5\% \\ _Operators_ & 22 & 12.9\% & 0 & 0\% & 22 & 21.2\% \\ \hline _Total_ & 170 & 100\% & 66 & 100\% & 104 & 100\% \\ \hline \hline \end{tabular}
+\end{table}
+Table 17: Distribution of VC-backed Cleantech companies by ecosystem segment 
+
+## 4 Conclusion
+
+The European Green Deal is a comprehensive strategy aimed at achieving carbon-neutrality by 2050. It encompasses various interventions to drive sustainable development, with a particular emphasis on technological innovation. By focusing on decarbonising the energy sector, improving energy efficiency, promoting circular economy practices, and advancing sustainable transportation solutions, the Green Deal seeks to foster a "green" or "clean" economy. Innovations in the field of environmental sustainability, commonly referred to as Cleantech, are a key element of Europe's environmental and net-zero strategy. Unfortunately, today, no suitable framework, classification or method exists to identify and classify companies engaged in Cleantech innovation.
+
+To accommodate this shortcoming, we developed a three-steps methodology based on: (i) a supervised ML algorithm applied to the extended business description of the full sample of European companies retrieved from Orbis dataset (ii) computer-aided filter of false positive Cleantech instances applied to each company labelled as (iii) a manual classification to identify companies that are committed to develop clean technologies, which led to the identification of 23,858 Cleantech companies, 2,990 of which were classified as "Cleantech innovators", while the remaining 20,868 companies were designated to the "Cleantech ecosystem". Identified companies were furthermore classified into different technology categories, such as environmental management, resources preservation, industrial energy management, capture, storage, sequestration or disposal of GHG, sustainable modes of transport and sustainable buildings. The database was subsequently enriched with financial accounting data (Orbis), patent information provided by (Orbis IP) and VC-investment data (VICO 4.0). The resulting novel database provides a unique perspective on the European Cleantech landscape.
+
+The results presented in this paper provide a brief description of this database and serve as the introductory analysis of the EIBURS-funded15 CLEU research project.16 In doing so, we provided a number of interesting insights into the European Cleantech ecosystem.
+
+Footnote 15: The EIB University Research Sponsorship (EIBURS) programme provides grants to help EU universities and academic research centres to develop activities in selected research areas in addition to those that would normally be carried out by the beneficiary and on topics of major interest to the EIB Group (EIB and EIF).
+
+Comparing our newly developed Cleantech classification to the traditional NACE sector classification, we found that Cleantech companies are predominantly active in the manufacturing, wholesale and retail trade, water supply and waste management, and construction sectors. Examining the spatial distribution of Cleantech in Europe, Germany, Italy, and France emerge as the key countries with the highest concentration of Cleantech companies. We also found Cleantech to be a well-established phenomenon, pre-dating to a large extent the two important Cleantech investment cycles, as a significant portion of the companies were established before the 2000s. We also analysed patenting activity of our Cleantech sample and found that Austria's Cleantech ecosystem is the most innovation-intensive, followed by Sweden and Germany, withsustainable energy production, energy-efficient industrial technologies, and air/water/soil pollution being the prominent technological categories for patenting. Investigating a selection of essential financial KPIs led us to conclude that Cleantech innovators tend to operate at a larger scale compared to their ecosystem counterparts, in terms of total assets, sales, and employee count. Finally, concerning VC financing, Finland, Sweden, France, and Spain emerge as the geographical areas with a high concentration of VC-backed companies.
+
+The data presented in our study reaffirms the vibrant nature of the Cleantech industry in Europe. With a flourishing startup ecosystem, the sector is well-positioned to contribute significantly to the shift towards a low-carbon economy and tackle the urgent global challenge of climate change. Our findings also highlight notable variations among European countries, reflecting the diverse landscape in terms of investment levels, innovation and regulatory support across Member States. These differences underscore the need for targeted strategies tailored to each country's specific context to foster sustainable growth and maximize the potential of the Cleantech industry in Europe.
+
+## Annex A: The evolution of the Cleantech concept
+
+Cleantech, also known as clean technology, is an industry sector that focuses on developing and deploying sustainable and environmentally friendly solutions for various sectors. One of the most debated topics among academics and practitioners relates to the concept's exact definition. The origin of the term "cleantech" is somewhat difficult to trace to a single originator, as it has been used in various forms and contexts by different individuals and organisations over time. However, one of the earliest known uses of the term "clean technology" can be traced back to the early 1990s, when it was used by business and industry leaders in California to describe a new wave of environmentally friendly and sustainable technologies. According to some sources, John Balbach, a California-based consultant and entrepreneur, is sometimes credited with coining the term "cleantech". Balbach reportedly used the term to describe a broad range of emerging technologies and business models that focused on environmental sustainability and energy efficiency.
+
+Given the importance of the topic, in 2002, the Cleantech Venture Network (nowadays known as Cleantech Group), a network of investors, was founded in San Francisco, California, "to address the lack of capital for clean technology ventures and the absence of a coordinated support network for the industry." ([https://www.cleantech.com/](https://www.cleantech.com/)). As part of its mission to help entrepreneurs, investors, corporations, service providers, government agencies, academic institutions, and non-profit organisations to connect, collaborate, and access the resources they needed to support and grow the cleantech industry, the organisation began using the term "cleantech" as a way of defining and promoting the sector, becoming an important segment of the broader technology and investment landscape. Lately, investors, in order to attract more capital, have chosen to use a different term referring to competitive (in terms of returns) investments that aim to solve the environmental problem (Caprotti, 2011). This strategy has led VC investments to grow by about 50% a year from 2004 to 2008, reaching a value of about $ 5 billion (Mills, 2015). However, the win-win strategy17 has failed since the crisis of 2008.
+
+Footnote 17: Win-win because of the double goal: sustainability and profitability.
+
+From an academic perspective, one early and influential work on clean technology was the book "Soft Energy Paths: Toward a Durable Peace" by Amory Lovins (1977), which argued for a transition away from centralised, fossil-fuel-based energy systems towards decentralised, renewable-based systems. Later on, in addition to works investigating technical aspects of cleantech technologies, the management literature of cleantech started to be interested in the topic too, covering a wide range of topics, including: i) innovation and technology management (i.e., to explore the role of R&D, intellectual property, open innovation, and collaborative innovation in the development of cleantech products and services); ii) financing and investment (i.e., to investigate VC, public funding, and corporate investments as sources of capital available to cleantech firms and the factors that influence investment decisions, such as risk, uncertainty, and environmental regulations); iii) business models and strategy (i.e., to understand how firms create and capture value from their clean technologies); iv) environmental sustainability andcorporate social responsibility (i.e., to figure out how cleantech firms address sustainability challenges, such as energy and resource efficiency, waste reduction, and carbon emissions); v) supply chain management (i.e., to explore the complexities of managing global supply chains for cleantech products, including issues related to supplier selection, quality control, and sustainability); vi) organisational behaviour (i.e., to analyse the motivation, values, and beliefs of cleantech entrepreneurs and employees, as well as the impact of organisational culture and leadership on innovation and performance); vi) policy and regulation (i.e., to explore the effectiveness of different policy instruments, such as subsidies, tax incentives, and carbon pricing, in promoting the transition to a low-carbon economy, how firms comply with regulations and how regulatory frameworks affect the profitability of cleantech firms).
+
+## Annex B: Machine learning-based classification
+
+### The Phases of supervised Machine Learning
+
+The initial step of our methodology was developing a ML classification tool to filter off all the companies which were certainly not Cleantechs. Specifically, we resorted to text classification, which is the process of automatically assigning documents to one or more predefined categories based on their content (Yang & Liu, 1999). Text classification can be naturally modelled as a supervised learning task in which a decision function is first derived by applying a machine-learning method on a set of labelled documents (training set), is evaluated on another set of labelled documents (test set), and then is applied to predict the category of incoming texts whose class is unknown.
+
+To create the training set and the test set, we randomly selected from the initial sample 8,501 companies' descriptions. Each description was classified as Cleantech or non-Cleantech by two independent research assistants. As noted by Sebastiani (2002), it is easier for an analyst to characterize a concept extensionally, i.e., to select instances of it, rather than intentionally, i.e., to describe the concept in words. Consistently, we provided the research assistants a general definition of Cleantech as those technologies that have a positive environmental impact, e.g. in terms of reduction of the consumption of non-renewable resources or of waste produced (Pernick and Wilder, 2007). Any doubt about the classification of a particular technology, as well as any inconsistency was discussed between the research assistants and the authors until an agreement was reached. We provided research assistants with the textual description of the companies' business activity only in order to avoid the manual classification process being biased by information gathered from external, not standardised sources. Classified documents have been split between training and test set following a 70/50 rule. Table B.1 provides details upon this split.
+
+### Feature extraction
+
+Following the creation of the training and test sets, we prepared each document to generate a list of features used in the subsequent ML predictive task. Feature extraction techniques stem from text mining, which is converting free text into numerical variables that can be then analyzed using statistical tools (Feinerer et al., 2008).
+
+The first step of this procedure is text pre-processing, which converts a vector of documents into a corpus, which is then converted into a _document term matrix_ (DTM). The algorithm is called "bag-of-words". This first step also includes the text cleaning process (e.g. converting the entire text to lowercase characters and removing all unnecessary punctuation and symbols). In our analysis, we used different text-cleaning procedures, specifically:* converting upper case letters to lower case;
+* spell checking;
+* substitution of contractions, such as converting "I'm" to "I am";
+* removing numbers;
+* removing punctuation and special characters (for instance @,",# [,$ etc.);
+* converting acronyms to regular expressions, such as "IT" to "Italy".
+
+Furthermore, _stop words_ were removed (a list of the stop words is reported in Annex C). Stop words are frequently used in texts but are poorly useful for predictions; as such, they can be omitted from the analysis.
+
+After carrying out the pre-processing phase, we performed text normalisation to convert words into their simplest form. In fact, it is known that any language includes words of various tenses, plurals, or derived from other words. Our goal was to reduce the words to their common root. A "lemmatisation" process was developed to group the various inflected forms of a word so that they can be analysed as a single lemma. An alternative to lemmatisation is "stemming". Unlike lemmatisation, stemming generates meaningless roots from words whose semantic nature can be very poor.
+
+Using the abovementioned corpus of documents, we constructed our Document Term Matrix. This object is a simple matrix structure, with each document as a row and each n-gram (or term) as a column. Once we constructed the DTM, we calculated the frequencies (total times each n-gram appears in all documents), with the n-grams as the names of the vector. In our analysis, we created two different tokeniser functions to construct the DTM for l-gram and 2-grams.
+
+Only n-grams with a frequency higher or equal to a specific threshold are kept in the model. The threshold is given using sparsity optimisation, which refers to the relative document frequency threshold for a term. In our case, with a sparseness equal to 0.50, only terms occurring in half of the documents were retained. At the end of this process, we extrapolated 251 l-gram and 181 2-grams for a total of 452 features.18 These features are used for training the Cleantech predictive model.
+
+Footnote 18: Examples of features extrapolated and used for training the Cleantech predictive model are: l) for l-gram features: Taxonomy, clean, electr, electron, energy, fuel, gas, power, process, produc, product, service, storage, util, vehicle, water; 2) for 2-grams features: building_material, company_engag, company_product, company_provid, construction_material, construction_service, engineering_service, engineering_work, food_product, fresh_fnuit, frozen_food, high_qual, industrial_build, information_techno, maintenance_service, management_service, metal_product, motor_vehic, necessary_assist, new_work, operation_specials, personal_car, petroleum_product, pharmaceutical_product, predominantly_oper, primality_engag, public_organ, raw_material, related_service, repair_service, residential_build, retail_distribute, retail_sal, retail_trad, stateoftheart_techno, transportation_service, utility_vehicl, wholesale_distribut, wholesale_trad, wide_rang, wide_variet.
+
+#### Prediction Task
+
+The prediction task aims to produce an accurate predicting map between the features generated in phase 2 and the "true" Cleantech label (l = Cleantech firm; 0 = non-Cleantech firm) using the available training dataset. This mapping is then projected to the unlabelled firms to provide them with an appropriate Cleantech predicted label. We used and compared various popular MLmethods to carry out this task by paying particular attention to their out-of-sample predicting performance. We selected the classifier providing the best test accuracy.
+
+Consider a firm \(i\) with an associated target binary variable \(P_{i}\) ("being Cleantech") that takes values one (positive occurrence) if the firm is (manually) classified as Cleantech and value zero (negative occurrence) otherwise. Based on the set of features created by the previous bag-of-words algorithm (\(Features_{i}\)) and referring to the firm \(i\), our prediction task was to find a mapping function \(f(\cdot)\) (i.e., a ML binary classifier) that predicts as best as possible the Cleantech event (i.e., the two-class variable \(P_{i}\) ):
+
+\[Features_{i}\xrightarrow{f(\cdot)}P_{i} \tag{1}\]
+
+The features used to predict \(P_{i}\) are those described in the previous section and refer to the frequency of lemmatised words (251 l-gram features). The standard ML procedure to first train and then test the mapping function is that of randomly splitting the data into a training set, over which the model is estimated and tuned, and a testing set, over which its predictive power is tested (Hastie et al., 2009).
+
+The size of these two sets must be chosen considering the trade-off between the benefit of a large training set (i.e., more information for building the mapping in (I)) and the benefit of a sufficiently large testing set (i.e., larger information for a more precise estimation of the testing error). To account for this trade-off, we followed the usual compromise of randomly dividing the database into 70% of observations for training and the remaining observations as an out-of-sample test set (Boehmke and Greenwell, 2019).
+
+To carry out our analysis, we used four different ML predicting algorithms:
+
+* Naive Bayes (NB): a discriminant classifier assuming no correlation among the features in each class (Gareth et al., 2015);
+* Random Forest (RF): a family of randomised tree-based classifier decision trees which uses different random subsets of the features at each split in the tree (Breiman, 2001);
+* Gradient Boosting Machines (GBM): an ensemble method which works in an iterative way where at each stage new learner tries to correct the pseudo-residual of its predecessors (Friedman, 2001);
+* Neural Network (NN): a model that uses a set of connected input/output units in which each connection has an associated weight and learns by adjusting the weights to predict the correct class label of the given inputs (Ripley et al., 2016).
+
+We also dealt with target variable imbalance. Indeed, firms classified as Cleantech are largely fewer than firms not classified as Cleantech (169 out of 8,501) and this generally produces under-performing predictions, as the unconditional probability to be Cleantech is highly skewed towards the absence of Cleantech, thus giving this category a larger advantage when classifying new instances. To address the imbalance issue, the four ML models were estimated using two different strategies:* _Class weighting_: a method imposing a higher cost when errors are made in the minority class (based on the _inverse probability weighting_ of the observations);
+* _Random Over-Sampling Examples (ROSE)_: an algorithm where artificially balanced samples are generated according to a smoothed bootstrap approach (Lunardon et al., 2014).
+
+The hyper-parameters optimisation was carried out over the training set using 10-fold repeated cross-validation, with five repetitions in the case of Class weights and 50 repetitions in the case of ROSE. All models were implemented using the R software, trained with the optimisation algorithms available through the CARET package (Kuhn, 2020).
+
+The performance of Cleantech classification prediction was assessed through the _Receiver Operating Characteristics (ROC) curve_(Fawcett, 2006). The ROC curve shows the classifier's diagnostic ability by plotting the true positive rate (TPR) on the y-axis against the false positive rate (FPR) on the x-axis since its discrimination threshold is varied (Antulov-Fantulin et al., 2021).
+
+#### Results using the class weighting strategy
+
+Figure B.I shows the ROC curves for the four algorithms trained on 70% of the observations and tested on the remaining 30% using the class weighting strategy. The estimates are based on the cross-validation algorithm, which trains and tests the model by tuning the hyper-parameters to maximise the area under the ROC curve.
+
+Table B.3 shows the model performance for the class weights strategy; one class means the model classifies all as negative due to the unbalancing of the data. The only model predicting positives in the case of Class weights is the GBM. The performances of GBM are satisfactory (Accuracy=0.937; and AUC=0.944).
+
+Table B.5 shows the model performance for the ROSE strategy. In this case, all models classify both categories (positives and negatives). The best model for accuracy and AUC is the GBM (Accuracy=0.922; and AUC=0.941).
+
+\begin{table}
+\begin{tabular}{c|c|c|c} \hline  & **Negative** & **Positive** & **Sum** \\ \hline
+**Negative** & 8,558 & 1,005 & 9,543 \\
+**Positive** & 58 & 399 & 457 \\
+**Not Classified** & 454,486 & 72,643 & 527,129 \\ \hline
+**Sum** & 465,082 & 74,047 & 537,129 \\ \end{tabular}
+\end{table}
+Table 6: Confusion matrix with the best model (GBM combined with Class weights)
+
+## Annex C: List of stop words
+
+\begin{tabular}{l c c} a & associated & consider \\ a's & at & considering \\ able & available & contain \\ about & away & containing \\ above & awfully & contains \\ according & b & corresponding \\ accordingly & be & could \\ across & became & couldn't \\ actually & because & course \\ after & become & currently \\ afterwards & becomes & d \\ again & becoming & definitely \\ against & been & described \\ ain't & before & despite \\ all & beforehand & did \\ allow & behind & didn't \\ allows & being & different \\ almost & believe & do \\ alone & below & does \\ along & beside & doesn't \\ already & besides & doing \\ also & best & don't \\ although & better & done \\ always & between & down \\ am & beyond & downwards \\ among & both & during \\ amongst & brief & e \\ an & but & each \\ and & by & edu \\ another & c & eg \\ any & c'mon & eight \\ anybody & c's & either \\ anyhow & came & else \\ anyone & can & elsewhere \\ anything & can't & enough \\ anyway & cannot & entirely \\ anyways & cant & especially \\ anywhere & cause & et \\ apart & causes & etc \\ appear & certain & even \\ appreciate & certainly & ever \\ appropriate & changes & every \\ are & clearly & everybody \\ aren't & co & everyone \\ around & com & everything \\ as & come & everywhere \\ aside & comes & ex \\ ask & concerning & exactly \\ asking & consequently & example \\ \end{tabular}
+
+\begin{tabular}{c c c} \hline \hline though & value & while \\ three & various & whither \\ through & very & who \\ throughout & via & who’s \\ thru & viz & whoever \\ thus & vs & whole \\ to & w & whom \\ together & want & whose \\ too & wants & why \\ took & was & will \\ toward & wasn't & willing \\ towards & way & wish \\ tried & we & with \\ tries & we'd & within \\ truly & we'll & without \\ try & we're & won't \\ trying & we've & wonder \\ twice & welcome & would \\ two & well & would \\ u & went & wouldn't \\ un & were & x \\ under & weren't & y \\ unfortunately & what & yes \\ unless & what's & yet \\ unlikely & whatever & you \\ until & when & you'd \\ unto & whence & you'll \\ up & whenever & you're \\ upon & where & you've \\ us & where's & your \\ use & whereafter & yours \\ used & whereas & yourself \\ useful & whereby & yourselves \\ uses & wherein & z \\ using & whereupon & zero \\ usually & wherever & \\ uucp & whether & \\ v & which & \\ \hline \end{tabular}
+
+## References
+
+* [1]
+* Antulov-Fantulin et al. (2021) Antulov-Fantulin, N., Lagravinese, R., & Resce, G. (2021). Predicting bankruptcy of local government: A machine learning approach. _Journal of Economic Behavior & Organization_, 185, 681-699. [https://doi.org/10.1016/jiebo.2021.01.014](https://doi.org/10.1016/jiebo.2021.01.014)
+* Bellucci et al. (2021) Bellucci, A., Fatica, S., Georgakaki, A., Gucciardi, G., Letout, S., & Pasimeni, F. (2021). Venture capital financing and green patenting (No. 2021/11). JRC Working Papers in Economics and Finance.
+* Boehmke & Greenwell (2019) Boehmke, B., & Greenwell, B. M. (2019). Hands-on machine learning with R. CRC press.
+* Breiman (2001) Breiman, L. (2001). Random Forests. _Machine Learning_, 45(1), 5-32. [https://doi.org/10.1025/A:100953404324](https://doi.org/10.1025/A:100953404324)
+* Caprotti (2011) Caprotti, F. (2011). The cultural economy of cleantech: Environmental discourse and the emergence of a new technology sector. Transactions of the Institute of British Geographers, 57(3), 570-585. [https://doi.org/10.1111/j.1475-5661.2011.00485.x](https://doi.org/10.1111/j.1475-5661.2011.00485.x)
+* Christensen & Hain (2017) Christensen, J. L., & Hain, D. S. (2017). Knowing where to go: The knowledge foundation for investments in renewable energy. _Energy Research and Social Science_, 25, 124-155. [https://doi.org/10.1016/j.erss.2016.12.025](https://doi.org/10.1016/j.erss.2016.12.025)
+* Cleantech Group (2021) Cleantech Group. (2021). From Chaos to Transformation: The Companies and Themes Delivering Sustainable Innovation (Global Cleantech 100, p. 61). Cleantech Group. [https://www.cleantech.com/release/cleantech-group-names-2021-global-cleantech-100-the-top-innovators-driving-sustainability-and-change/](https://www.cleantech.com/release/cleantech-group-names-2021-global-cleantech-100-the-top-innovators-driving-sustainability-and-change/)
+* Criscuolo & Menon (2015) Criscuolo, C., & Menon, C. (2015). Environmental policies and risk finance in the green sector: Cross-country evidence. _Energy Policy_, 85, 58-56. [https://doi.org/10.1016/j.enpol.2015.03.023](https://doi.org/10.1016/j.enpol.2015.03.023)
+* Cumming et al. (2016) Cumming, D., Henriques, I., & Sadorsky, P. (2016). 'Cleantech' venture capital around the world. _International Review of Financial Analysis_, 44, 86-97. [https://doi.org/10.1016/j.nifa.2016.01.015](https://doi.org/10.1016/j.nifa.2016.01.015)
+* Ezgi Bezirhan Arikan & Havva Duygu Ozsoy (2015) Ezgi Bezirhan Arikan & Havva Duygu Ozsoy. (2015). A Review: Investigation of Bioplastics. _Journal of Civil Engineering and Architecture_, 9(2). [https://doi.org/10.17265/1954-7359/2015.02.007](https://doi.org/10.17265/1954-7359/2015.02.007)
+* De Haan Montes et al. (2025) De Haan Montes, G., Gvetadze, S., Lottner, F., Milander, H., Pan, X., Tian, C., & Torfs, W. (2025). Determinants of EU Greentech investments: the role of financial market conditions (No. 2022/86). EIF Working Paper
+* Fawcett (2006) Fawcett, T. (2006). An introduction to ROC analysis. _Pattern Recognition Letters_, 27(8), 861-874. [https://doi.org/10.1016/j.patrec.2005.10.010](https://doi.org/10.1016/j.patrec.2005.10.010)
+* Feinerer et al. (2008) Feinerer, I., Hornik, K., & Meyer, D. (2008). Text Mining Infrastructure in R. _Journal of Statistical Software_, 25(5). [https://doi.org/10.18657/jssv025.105](https://doi.org/10.18657/jssv025.105)
+* Friedman (2001) Friedman, J. H. (2001). Greedy Function Approximation: A Gradient Boosting Machine. The Annals of Statistics, 29(5), 1189-1252. JSTOR.
+* Gareth et al. (2015) Gareth, J., Witten, D., Hastie, T., Tibshirani, R. (2015). An Introduction to Statistical Learning : with Applications in R, New York, Springer.
+* Hascic & Migotto (2015) Hascic, I., & Migotto, M. (2015). Measuring environmental innovation using patent data. OECD. [https://doi.org/10.1787/Sis009f48vw-en](https://doi.org/10.1787/Sis009f48vw-en)
+* Hastie et al. (2009) Hastie, T., Tibshirani, R., Friedman, J. H., & Friedman, J. H. (2009). The elements of statistical learning: data mining, inference, and prediction (Vol. 2, pp. 1-758). New York: springer.
+
+* IEA-EPO (2021). Patents and the energy transition: global trends in clean energy technology innovation. IEA-EPO Report, downloadable at _[https://www.iea.org/reports/patents-and-the-energy-transition_](https://www.iea.org/reports/patents-and-the-energy-transition_)
+* Kraemer-Eis et al. (2022) Kraemer-Eis, H., Gvetadze, S., Lang, F., and Torfs, W. (2022). European Small Business Finance Outlook. EIF Working Paper 2022/84. EIF Research & Market Analysis. November 2022.
+* Kraemer-Eis et al. (2016) Kraemer-Eis, H., Signore, S., & Prencipe, D. (2016). The European venture capital landscape: an EIF perspective. Volume I: The impact of EIF on the VC ecosystem (No. 2016/34). EIF Working Paper.
+* Kuhn (2020) Kuhn, M. (2020). caret: Classification and Regression Training (R package version 6.0-85). _[https://CRAN.R-project.org/package-caret_](https://CRAN.R-project.org/package-caret_). R package version 6.0-85
+* Lovins (1977) Lovins, A. B. (1977). Soft energy paths: Toward a durable peace. Friends of the Earth International,San Francisco. _[https://www.osti.gov/bib/7088135_](https://www.osti.gov/bib/7088135_)
+* Lunardon et al. (2014) Lunardon, N., Menardi, G., & Torelli, N. (2014). ROSE: a package for binary imbalanced learning. _R journal_, 6(1).
+* Mills (2015) Mills, L. (2015). Global trends in clean energy investment (No. 5). Bloomberg New Energy Finance.
+* Pitchbook (2023) Pitchbook (2023) Clean Energy Report. VC trends and emerging opportunities. Pitchbook Emerging Tech Research. QI/2025
+* Ripley et al. (2016) Ripley, B., Venables, W., & Ripley, M. B. (2016). Package 'nnet'. R Package Version, 7(5-12), 700.
+* Soete (1987) Soete, L. (1987). The impact of technological innovation on international trade patterns: the evidence reconsidered. _Research policy_, 16(2-4), 101-150.
+* Yang and Liu (1999) Yang, Y., & Liu, X. (1999). A re-examination of text categorization methods. 42-49.
+
+## 11 The European Investment Fund
+
+The European Investment Fund (EIF) is Europe's leading risk finance provider for small and medium sized enterprises (SMEs) and mid-caps, with a central mission to facilitate their access to finance. As part of the European Investment Bank (EIB) Group, EIF designs, promotes and implements equity and debt financial instruments which specifically target the needs of these market segments.
+
+In this role, EIF fosters EU objectives in support of innovation, research and development, entrepreneur, growth, and employment. EIF manages resources on behalf of the EIB, the European Commission, national and regional authorities and other third parties. EIF support to enterprises is provided through a wide range of selected financial intermediaries across Europe. EIF is a public-private partnership whose tripartite shareholding structure includes the EIB, the European Union represented by the European Commission and various public and private financial institutions from European Union Member States and Turkey. For further information, please visit www.eif.org.
+
+## 11 EIF's Research & Market Analysis
+
+Research & Market Analysis (RMA) supports EIF's strategic decision-making, product development and mandate management processes through applied research and market analyses. RMA works as internal advisor, participates in international fora and maintains liaison with many organisations and institutions.
+
+## 11 This Working Paper series
+
+The EIF Working Papers are designed to make available to a wider readership selected topics and studies in relation to EIF's business. The Working Papers are edited by EIF's Research & Market Analysis and are typically authored or co-authored by EIF staff, or written in cooperation with EIF. The Working Papers are usually available only in English and distributed in electronic form (pdf).
+
+* [2025/091] Using machine learning to map the European Cleantech sector. Recent trends in EU corporate demography and policy
+* [2025/089] Entrepreneurial Finance and the Russian War against Ukraine: a Survey of European
+* [2025/088] Fairness in algorithmic decision systems: a microfinance perspective
+* [2025/087] Female access to finance: a survey of literature.
+* [2025/086] Determinants of EU Greentech investments: the role of financial market conditions
+* [2022/085] EIF Private Equity Mid-Market Survey 2022: Market sentiment and impact of the current geopolitical \(\mathcal{S}\) macroeconomic environment.
+* [2022/084] European Small Business Finance Outlook 2022.
+* [2022/085] The 2021 EIF SME Access to Finance Index. October 2022 update.
+* [2022/082] EIF VC Survey 2022: Market sentiment and impact of the current geopolitical \(\mathcal{S}\) macroeconomic environment.
+* [2022/081] EIF Business Angel Survey 2021/22: Market sentiment.
+* ESG considerations in the lending strategy of private debt funds.
+* Private Debt for SMEs
+- Market overview.
+* [2021/078] EIF Private Equity Mid-Market Survey 2021: Market sentiment.
+* [2021/077] EIF Private Equity Mid-Market Survey: Fund managers' perception of EIF's value added.
+* October 2021 update.
+* [2021/075] European Small Business Finance Outlook.
+* [2021/074] EIF Venture Capital Survey 2021: Market sentiment.
+* Regional analysis.
+* [2021/072] Financial and social inclusion in Europe.
+* COVID-19 impact
+- Policy measures.
+* [2021/070] The impact of VC on the exit and innovation outcomes of EIF-backed start-ups.
+* [2021/069] Scale-Up Financing and IPOs: Evidence From Three Surveys.
+* September 2020 update.
+* [2021/067] European Small Business Finance Outlook 2020. The impact of COVID-19 on SME Financing markets.
+* [2021/066] Measuring microfinance impact: A practitioner perspective and working methodology.
+* [2021/065] The social return on investment (SROI) of four microfinance projects.
+* [2021/064] The market sentiment in European Private Equity and Venture Capital: Impact of COVID-19.
+* [2021/065] ESG considerations in Venture Capital and Business Angel investment decisions:_Evidence from two pan-European surveys._
+
+_The Business Angel portfolio under the European Angels Fund: An empirical analysis._
+
+_2019/061_
+
+_European Small Business Finance Outlook._
+
+_2019/060_
+
+_EIF Business Angels Survey 2019 - Market sentiment, public intervention and EIF's value added._
+
+_2019/059_
+
+_EIF VC Survey 2019 - Fund managers' market sentiment and policy recommendations._
+
+_2019/058_
+
+_EIF SME Access to Finance Index - June 2019 update._
+
+_2019/057_
+
+_European Small Business Finance Outlook._
+
+_2019/056_
+
+_The real effects of EU loan guarantee schemes for SMEs: A pan-European assessment._
+
+_2019/055_
+
+_The European Venture Capital Landscape: an EIF perspective. Volume V: The economic impact of VC investments supported by the EIF._
+
+_2019/054_
+
+_Econometric study on the impact of EU loan guarantee financial instruments on growth and jobs of SMEs._
+
+_2018/053_
+
+_European Small Business Finance Outlook._
+
+_2018/052_
+
+_The effects of EU-funded guarantee instruments of the performance of Small and Medium Enterprises - Evidence from France._
+
+_2018/051_
+
+_EIF VC Survey 2018 - Fund managers' perception of EIF's Value Added._
+
+_2018/050_
+
+_European Small Business Finance Outlook._
+
+_2018/049_
+
+_EIF SME Access to Finance Index - June 2018 update._
+
+_2018/048_
+
+_EIF VC Survey 2018 - Fund managers' market sentiment and views on public intervention._
+
+_2018/047_
+
+_EIF SME Access to Finance Index._
+
+_2017/046_
+
+_European Small Business Finance Outlook._
+
+_2017/045_
+
+_The European venture capital landscape: an EIF perspective._
+
+_Volume IV: The value of innovation for EIF-backed startups._
+
+_2017/044_
+
+_Financing Micro Firms in Europe: An Empirical Analysis._
+
+_2017/043_
+
+_European Small Business Finance Outlook._
+
+_2017/042_
+
+_Credit Guarantee Schemes for SME lending in Western Europe._
+
+_2017/041_
+
+_The European Venture Capital landscape: an EIF perspective. Volume III: Liquidity events and returns of EIF-backed VC investments._
+
+_2017/040_
+
+_Financing Patterns of European SMEs Revisited: An Updated Empirical Taxonomy and Determinants of SME Financing Clusters._
+
+_2017/039_
+
+_Guaranteeing Social Enterprises - The EaSI way._
+
+_2016/038_
+
+_The European Venture Capital Landscape: an EIF perspective. Volume II: Growth patterns of EIF-backed startups._
+
+_2016/057_
+
+_European Small Business Finance Outlook._
+
+_2016/056_
+
+_The role of cooperative banks and smaller institutions for the financing of SMEs and small midcaps in Europe._
+
+_2016/055_
+
+_European Small Business Finance Outlook._
+## Chapter 1 Introduction
+
+The European Venture Capital Landscape: an EIF perspective is a fundamental tool in the field of physics. The European Venture Capital Landscape is a fundamental tool in the field of physics.
+
+### Follow our stories and work on social media
+
+Figure 1: [topsep=0pt,topsep=0pt,parsep=0pt,topsep=0pt]

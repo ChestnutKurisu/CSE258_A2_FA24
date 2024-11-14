@@ -1,0 +1,446 @@
+# PathSim: Meta Path-Based Top-K Similarity Search in Heterogeneous Information Networks
+
+ Yizhou Sun\({}^{\dagger}\) Jiawei Han\({}^{\dagger}\) Xifeng Yan\({}^{\ddagger}\) Philip S. Yu\({}^{\ddagger}\) Tianyi Wu\({}^{\diamond}\)
+
+\({}^{\dagger}\) University of Illinois at Urbana-Champaign, Urbana, IL
+
+\({}^{\ddagger}\) University of California at Santa Barbara, Santa Barbara, CA
+
+\({}^{\lx@sectionsign}\) University of Illinois at Chicago, Chicago, IL
+
+\({}^{\diamond}\) Microsoft Corporation, Redmond, WA
+
+{sun22, hanj}@illinois.edu \({}^{\ddagger}\)xyan@cs.ucsb.edu \({}^{\ddagger}\)psyu@cs.uci.edu \({}^{\diamond}\)tiwu@microsoft.com
+
+###### Abstract
+
+Similarity search is a primitive operation in database and Web search engines. With the advent of large-scale heterogeneous information networks that consist of multi-typed, interconnected objects, such as the bibliographic networks and social media networks, it is important to study similarity search in such networks. Intuitively, two objects are similar if they are linked by many paths in the network. However, most existing similarity measures are defined for homogeneous networks. Different semantic meanings behind paths are not taken into consideration. Thus they cannot be directly applied to heterogeneous networks.
+
+In this paper, we study similarity search that is defined among the same type of objects in heterogeneous networks. Moreover, by considering different linkage paths in a network, one could derive various similarity semantics. Therefore, we introduce the concept of _meta path-based similarity_, where a _meta path_ is a path consisting of a sequence of relations defined between different object types (i.e., structural paths at the meta level). No matter whether a user would like to explicitly specify a path combination given sufficient domain knowledge, or choose the best path by experimental trials, or simply provide training examples to learn it, meta path forms a common base for a network-based similarity search engine. In particular, under the meta path framework we define a novel similarity measure called _PathSim_ that is able to find _peer objects_ in the network (e.g., find authors in the similar field and with similar reputation), which turns out to be more meaningful in many scenarios compared with random-walk based similarity measures. In order to support fast online query processing for PathSim queries, we develop an efficient solution that partially materializes short meta paths and then concatenates them online to compute top-\(k\) results. Experiments on real data sets demonstrate the effectiveness and efficiency of our proposed paradigm.
+
+2
+
+## 1 Introduction
+
+_Heterogeneous information networks_ are the logical networks involving multiple typed objects and multiple typed links denoting different relations, such as bibliographic networks, social media networks, and the knowledge network encoded in Wikipedia. It is important to provide effective search functions in such networks, where links play an essential role and attributes for objects are difficult to fully obtain. In particular, we are interested in providing similarity search functions for objects that are from the same type. For example, in a bibliographic network, a user may be interested in the (top-\(k\)) most similar authors for a given author, or the most similar venues for a given venue; in the Flickr network, a user may be interested in searching for the most similar pictures for a given picture, and so on.
+
+Similarity search has been extensively studied for traditional categorical and numerical data types in relational data. There are also a few studies leveraging link information in networks. Most of these studies are focused on homogeneous networks or bipartite networks, such as personalized PageRank (P-PageRank) [10], SimRank [8] and SCAN [20]. However, these similarity measures are disregarding the subtlety of different types among objects and links. Adoption of such measures to heterogeneous networks has significant drawbacks: Objects of different types and links carry different semantic meanings, and it does not make sense to mix them to measure the similarity without distinguishing their semantics.
+
+To distinguish the semantics among paths connecting two objects, we introduce a meta path-based similarity framework for objects of the same type in a heterogeneous network. A meta path is a sequence of relations between object types, which defines a new composite relation between its starting type and ending type. Consider a bibliographic network extracted from DBLP with four types of objects, namely, authors (A), papers (P), terms (T), and venues (C). Table 1 shows the top-4 most similar venues for a given venue, DASFAA, based on (a) the common authors shared by two venues, or (b) the common topics (i.e., terms) shared by two venues. These two scenarios are represented by two distinct meta paths: (a) \(CPAPC\), denoting that the similarity is defined by the meta path "venue-paper-author-paper-venue", whereas (b) \(CPTPC\), by the meta path "venue-paper-topic-paper-venue". A user can choose either (a) or (b) or their combination based on the preferred similarity semantics. According to Path (a), DASFAA is closer to DEXA, WAIM, and APWeb, _i.e._, those that share many common authors, whereas according to Path (b), it is closer to Data Knowl. Eng., ACM Trans. DB Syst., and Inf. Syst., _i.e._, those that
+
+\begin{table}
+\begin{tabular}{|c|c|c|} \hline Rank & \(CPAPC\) path & \(CPTPC\) path \\ \hline
+1 & DASFAA & DASFAA \\
+2 & DEXA & Data Knowl. Eng. \\
+3 & WAM & ACM Trans. DB Syst. \\
+4 & APWeb & Inf. Syst. \\ \hline \end{tabular}
+\end{table}
+Table 1: Top-4 similar venues for “DASFAA” under two meta paths.
+
+address many common topics. The meta path framework provides a powerful mechanism for a user to select an appropriate similarity semantics, by choosing a proper meta path, or learn it from a set of training examples of similar objects.
+
+Under the proposed meta path-based similarity framework, there are multiple ways to define a similarity measure between two objects, based on concrete paths following a given meta path. One may adopt some existing similarity measures, such as (1) random walk used in P-PageRank, (2) pairwise random walk used in SimRank, or directly apply (3) P-PageRank and (4) SimRank on the extracted sub-network. However, these measures are biased to either highly visible objects (_i.e._, objects associated with a large number of paths) or highly concentrated objects (_i.e._, objects with a large percentage of paths going to a small set of objects). We propose a new similarity measure _PathSim_, which is able to capture the subtle semantics of similarity among peer objects in a network. In comparison, given a query object, PathSim can identify objects that not only are strongly connected but also share similar visibility in the network given the meta path. Table 2 presents in three measures the results of finding top-5 similar authors for "Anhai Doan", who is a well-established young researcher in the database field, under the meta path \(APCPA\) (based on their shared venues), in the database and information system (DBIS) area. P-PageRank returns the most similar authors as those published substantially in the area, _i.e._, highly ranked authors; SimRank returns a set of authors that are concentrated on a small number of venues shared with Doan; whereas PathSim returns Patel, Deshpande, Yang and Miller, who share very similar publication records and are also rising stars in the database field as Doan. Obviously, PathSim captures desired semantic similarity as peers in such networks.
+
+Compared with P-PageRank and SimRank, the calculation for PathSim is much more efficient, as it is a local graph measure. But it still involves expensive matrix multiplication operations for top-\(k\) search functions, as we need to calculate the similarity between the query and every object of the same type in the network. In order to support fast online query processing for large-scale networks, we propose a methodology that partially materializes short length meta paths and then online concatenates them to derive longer meta path-based similarity. First, a baseline method (_PathSim-baseline_) is proposed, which computes the similarity between query object \(x\) and all the candidate objects \(y\) of the same type. Next, a co-clustering based pruning method (_PathSim-pruning_) is proposed, which prunes candidate objects that are not promising according to their similarity upper bounds.
+
+The contributions of this paper are summarized as below.
+
+1. It investigates _similarity search in heterogeneous information networks_, a new but increasingly important issue due to the proliferation of linked data and their broad applications.
+2. It proposes a new framework of _meta path-based similarity_ and a new definition of similarity measure, _PathSim_, that captures the subtle similarity semantics among peer objects in networks.
+3. Computing PathSim is more efficient than computing P-PageRank and SimRank due to the usage of limited meta paths. Moreover, we provide an efficient _co-clustering-based computation framework_ for fast query processing in large information networks.
+4. Our experiments demonstrate the effectiveness of meta path-based similarity framework and the PathSim measure, in comparison with random walk-based measures, and the efficiency of PathSim search algorithms.
+
+## 2 Problem Definition
+
+In this section, we introduce a meta path-based similarity framework, a novel similarity measure under this framework, PathSim, and propose a PathSim-based top-\(k\) similarity search problem in information networks.
+
+### Heterogeneous Information Network
+
+A heterogeneous information network is a special type of information network with the underneath data structure as a directed graph, which either contains multiple types of objects or multiple types of links.
+
+**Definition 1**: _Information Network. An information network is defined as a directed graph \(G=(V,E)\) with an object type mapping function \(\phi:V\rightarrow\mathcal{A}\) and a link type mapping function \(\psi:E\rightarrow\mathcal{R}\), where each object \(v\in V\) belongs to one particular object type \(\phi(v)\in\mathcal{A}\), and each link \(e\in E\) belongs to a particular relation \(\psi(e)\in\mathcal{R}\)._
+
+Different from the traditional network definition, we explicitly distinguish object types and relationship types in the network. Notice that, if a relation exists from type \(A\) to type \(B\), denoted as \(A\,R\,B\), the inverse relation \(R^{-1}\) holds naturally for \(B\,R^{-1}\)\(A\). For most of the times, \(R\) and its inverse \(R^{-1}\) are not equal, unless the two types are the same and \(R\) is symmetric. When the types of objects \(|\mathcal{A}|>1\) or the types of relations \(|\mathcal{R}|>1\), the network is called **heterogeneous information network**; otherwise, it is a **homogeneous information network**.
+
+**Example 1**: _A bibliographic information network is a typical heterogeneous network, containing objects from four types of entities: papers (P), venues (i.e., conferences/journals) (C), authors (A), and terms (T). For each paper \(p\in P\), it has links to a set of authors, a venue, a set of words as terms in the title, a set of citing papers, and a set of cited papers, and the link types are defined by these relations._
+
+Given a complex heterogeneous information network, it is necessary to provide its meta level (i.e., schema-level) description for better understanding. Therefore, we propose the concept of network schema to describe the meta structure of a network.
+
+**Definition 2**: _Network schema. The network schema is a meta template for a heterogeneous network \(G=(V,E)\) with the object type mapping \(\phi\cdot V\to A\) and the link mapping \(\psi:E\rightarrow\mathcal{R}\), which is a directed graph defined over object types \(\mathcal{A}\) with edges as relations from \(\mathcal{R}\), denoted as \(T_{G}=(\mathcal{A},\mathcal{R})\)._
+
+The concept of network schema is similar to that of the ER (Entity-Relationship) model in database systems, but only captures the entity type and their binary relations, without considering the attributes for each entity type. Network schema serves as a template for a network, and tells how many types of objects there are in the network and where the possible links exist. Notice that although a relational database can often be transformed into an information network, the latter is much more general and can handle more unstructured and non-normalized data and links, and is also easier to deal with graph operations such as calculating the number of paths between two objects.
+
+\begin{table}
+\begin{tabular}{|c||c|c|c|} \hline Rank & P-PageRank & SimRank & PathSim \\ \hline
+1 & Anfair Doan & Anfair Doan & Anfair Doan \\
+2 & Philip S. Yu & Douglas W. Cornell & Jignesh M. Patel \\
+3 & Jiawei Han & Adam Silberstein & Amol Deshpande \\
+4 & Hector Garcia-Molina & Samuel DeFazio & Jun Yang \\
+5 & Gerhard Weikum & Curr Ellmann & Renee J. Miller \\ \hline \end{tabular}
+\end{table}
+Table 2: **Top-5 similar authors for “AnHai Doan” in DBIS area.**
+
+**Example 2**: _Bibliographic network schema. For a bibliographic network defined in Example 1, the network schema is shown in Fig. 1(a). Links exist between authors and papers denoting the writing or written-by relations, between venues and papers denoting the publishing or published-in relations, between papers and terms denoting using or used-by relations, and between papers, denoting citing or cited-by relations._
+
+### Meta Path-based Similarity Framework
+
+In a heterogeneous network, two objects can be connected via different paths. For example, two authors can be connected via "author-paper-author" path, "author-paper-venue-paper-author" path, and so on. Intuitively, the semantics underneath different paths imply different similarities. Formally, these paths are called _meta paths_, defined as follows.
+
+**Definition 3**: _Meta path. A meta path \(\mathcal{P}\) is a path defined on the graph of network schema \(T_{G}=(\mathcal{A},\mathcal{R})\), and is denoted in the form of \(A_{1}\stackrel{{ R_{1}}}{{\longrightarrow}}A_{2}\stackrel{{ R_{2}}}{{\longrightarrow}}\ldots\stackrel{{ R_{l}}}{{\longrightarrow}}A_{l+1}\), which defines a composite relation \(R=R_{1}\circ R_{2}\circ\ldots\circ R_{l}\) between type \(A_{1}\) and \(A_{l+1}\), where \(\circ\) denotes the composition operator on relations._
+
+The **length** of \(\mathcal{P}\) is the number of relations in \(\mathcal{P}\). Further, we say a meta path is **symmetric** if the relation \(R\) defined by it is symmetric. For simplicity, we also use type names denoting the meta path if there exist no multiple relations between the same pair of types: \(\mathcal{P}=(A_{1}A_{2}\ldots A_{l+1})\). For example, in the DBLP network, the co-author relation can be described using the length-2 meta path \(A\stackrel{{\text{wiring}}}{{\longrightarrow}}P\stackrel{{ \text{wiring},\text{by}}}{{\longrightarrow}}A\), or short as \(APA\) if there is no ambiguity. We say a path \(p=(a_{1}a_{2}\ldots a_{l+1})\) between \(a_{1}\) and \(a_{l+1}\) in network \(G\) follows the meta path \(\mathcal{P}\), if \(\forall i,\phi(a_{i})=A_{i}\) and each link \(e_{i}=\langle a_{i}a_{i+1}\rangle\) belongs to each relation \(R_{i}\in\mathcal{P}\). We call these paths as **path instances** of \(\mathcal{P}\), which are denoted as \(p\in\mathcal{P}\). A meta path \(\mathcal{P}^{\prime}\) is the **reverse meta path** of \(\mathcal{P}\), if \(\mathcal{P}^{\prime}\) is the reverse path of \(\mathcal{P}\) in \(T_{G}\), which is denoted as \(\mathcal{P}^{-1}\) and defines an inverse relation of the one defined by \(\mathcal{P}\). Similarly, we define the **reverse path** instance of \(p\) as the reverse path of \(p\) in \(G\), which is denoted as \(p^{-1}\). Two meta paths \(\mathcal{P}_{1}=(A_{1}A_{2}\ldots A_{l})\) and \(\mathcal{P}_{2}=(A^{\prime}_{1}A^{\prime}_{2}\ldots A^{\prime}_{k})\) are **concatenable** if and only if \(A_{l}=A^{\prime}_{l}\), and the concatenated path is written as \(\mathcal{P}=(\mathcal{P}_{1}\mathcal{P}_{2})\), which equals to \((A_{1}A_{2}\ldots A_{l}A^{\prime}_{2}\ldots A^{\prime}_{k})\). A simple example of concatenation is: \(AP\) and \(PA\) can be concatenated to the meta path \(APA\), which defines the co-author relation.
+
+Analogously, a meta path in an information network corresponds to a feature in a traditional data set. Given a user-specified meta path, say \(\mathcal{P}=(A_{1}A_{2}\ldots A_{l})\), several similarity measures can be defined for a pair of objects \(x\in A_{1}\) and \(y\in A_{l}\), according to the path instances between them following the meta path. We list several straightforward measures:
+
+* Path count: the number of path instances \(p\) between \(x\) and \(y\) following \(\mathcal{P}\): \(s(x,y)=|\{p:p\in\mathcal{P}\}|\).
+* Random walk: \(s(x,y)\) is the probability of the random walk that starts form \(x\) and ends with \(y\) following meta path \(\mathcal{P}\), which is the sum of the probabilities of all the path instances \(p\in\mathcal{P}\) starting with \(x\) and ending with \(y\), denoted as \(Prob(p)\): \(s(x,y)=\sum_{p\in\mathcal{P}}Prob(p)\).
+* Pairwise random walk: for a meta path \(\mathcal{P}\) that can be decomposed into two shorter meta paths with the same length \(\mathcal{P}=(\mathcal{P}_{1}\mathcal{P}_{2})\), \(s(x,y)\) is then the pairwise random walk probability starting from objects \(x\) and \(y\) and reaching the same middle object: \(s(x,y)=\sum_{(p_{1}p_{2})\in(\mathcal{P}_{1}\mathcal{P}_{2})}Prob(p_{1})Prob(p_{ 2}^{-1})\), where \(Prob(p_{1})\) and \(Prob(p_{2}^{-1})\) are random walk probabilities of the two path instances.
+
+In general, we can define a meta path-based similarity framework for the object \(x\) and object \(y\) as: \(s(x,y)=\sum_{p\in\mathcal{P}}f(p)\), where \(f(p)\) is some measure defined on the path instance \(p\) between \(x\) and \(y\). Notice that, for measures P-PageRank and SimRank defined on homogeneous networks, they are weighted combinations of random walk measure or pairwise random walk measure over different meta paths in homogeneous networks, in which the meta paths are in the form of the concatenation of one relation with different lengths.
+
+### PathSim: A Novel Similarity Measure
+
+Although there have been several similarity measures as presented above, they are biased to either highly visible objects or highly concentrated object but cannot capture the semantics of peer similarity. For example, the path count and random walk-based similarity always favor objects with large degrees, and the pairwise random walk-based similarity favors concentrated objects that the majority of the links goes to a small portion of objects. However, in many scenarios, finding similar objects in networks is to _find similar peers_, such as finding similar authors based on their field and reputation, finding similar actors based on their movie style and productivity, and finding similar products based on its function and popularity.
+
+This motivated us to propose a new, meta path-based similarity measure, called _PathSim_, that captures the subtlety of peer similarity. The intuition behind it is that two similar peer objects should not only be strongly connected, but also share comparable visibility. As the relation of peer should be symmetric, we then confine PathSim merely on the symmetric meta paths. It is easy to see that, _round trip meta paths_ with the form of \(\mathcal{P}=(\mathcal{P}_{l}\mathcal{P}_{l}^{-1})\) are always symmetric.
+
+**Definition 4**: _PathSim: A Meta path-based similarity measure. Given a symmetric meta path \(\mathcal{P}\), PathSim between two objects of the same type \(x\) and \(y\) is:_
+
+\[s(x,y)=\frac{2\times|\{p_{x\sim y}:p_{x\sim y}\in\mathcal{P}\}|}{|\{p_{x\sim x}:p_ {x\sim x}\in\mathcal{P}\}|+|\{p_{y\sim y}:p_{y\sim y}\in\mathcal{P}\}|}\]
+
+_where \(p_{x\sim y}\) is a path instance between \(x\) and \(y\), \(p_{x\sim x}\) is that between \(x\) and \(x\), and \(p_{y\sim y}\) is that between \(y\) and \(y\)._
+
+This shows that given a meta path \(\mathcal{P}\), \(s(x,y)\) is defined in terms of two parts: (1) their connectivity defined by the number of paths between them following \(\mathcal{P}\); and (2) the balance of their visibility, where the visibility is defined as the number of path instances between themselves. Notice that we do count multiple occurrences of a path instance as the weight of the path instance, which is the product of weights of all the links in the path instance. To see how this new measure works, we compare PathSim with a set of measures using a toy example to find peer authors, using meta path \(ACA\).
+
+Figure 1: Bibliographic network schema and meta paths.
+
+**Example 3**: _Comparing a set of measures. Table 3(a) shows a toy example of adjacency matrix \(W_{AC}\) between authors and venues in a network, denoting the number of papers published by each author in each venue. The query is to find the peer authors for "Mike". As "Bob" has exactly the same publication records as "Mike", it is expected to be the most similar peer. PathSim generates similarity scores: \(s(Mike,Jim)=\frac{2\left(2\wedge 50\right)+1\times 20}{\left(2\times 2 \times 1\right)+1\left(0\right)\times 50\times 20\times 20}=0.0826\), \(s(Mike,Bob)=1\), and so on; and the similarity scores derived by **P-PageRank**, **SimRank**, **random walk (RW)**, and **pairwise random walk (PRW)** on the same meta path \(ACA\), are also illustrated in Table 3(b). One can see that PathSim is the only measure giving the result that Bob and Mary are more similar to Mike than Jim is, in terms of peers, which follows human intuition._
+
+We now introduce the calculation of PathSim between any two objects of the same type given a certain meta path.
+
+**Definition 5**: _Communing matrix. Given a network \(G=(V,E)\) and its network schema \(T_{G}\), a commuting matrix \(M\) for a meta path \(\mathcal{P}=(A_{1}A_{2}\ldots A_{l})\) is defined as \(M=W_{A_{1}A_{2}}W_{A_{2}A_{3}}\)\(\ldots W_{A_{l-1}A_{l}}\), where \(W_{A_{i}A_{j}}\) is the adjacency matrix between type \(A_{i}\) and type \(A_{j}\). \(M(i,j)\) represents the number of paths instances between object \(x_{i}\in A_{1}\) and object \(y_{j}\in A_{l}\) under meta path \(\mathcal{P}\)._
+
+For example, commuting matrix \(M\) for the meta path \(\mathcal{P}=(APA)\) is a co-author matrix, with each element representing the number of co-authored papers for the pair of authors. Given a symmetric meta path \(\mathcal{P}\), PathSim between two objects \(x_{i}\) and \(x_{j}\) from the same type can be calculated as \(s(x_{i},x_{j})=\frac{2M_{ij}}{M_{ii}+M_{jj}}\), where \(M\) is the commuting matrix for the meta path \(\mathcal{P}\), \(M_{ii}\) and \(M_{jj}\) are the visibility for \(x_{i}\) and \(x_{j}\) in the network given the meta path.
+
+It is easy to see that the commuting matrix for the reverse meta path of \(\mathcal{P}_{l}\), which is \(\mathcal{P}_{l}^{-1}\), is the _transpose_ of commuting matrix for \(\mathcal{P}_{l}\). In this paper, we only consider the meta path in the round trip form of \(\mathcal{P}=(\mathcal{P}_{l}\mathcal{P}_{l}^{-1})\), to guarantee its symmetry and therefore the symmetry of the PathSim measure. Notice that, if the meta path is length-2, the measure of PathSim is degenerated to a measure that compares the similarity of the neighbor sets of two objects, which is called Dice's coefficient [4]. By viewing PathSim in the meta path-based similarity framework, \(f(p)=2^{w(a_{1},a_{2})\ldots w(a_{l-1},a_{l})}\), for any path instance \(p\) starting from \(x_{i}\) and ending with \(x_{j}\) following the meta path, where \(w(a_{i},a_{j})\) is the weight for the link \(\langle a_{i},a_{j}\rangle\) defined in the adjacency matrix.
+
+Some good properties of PathSim, such as symmetric, self-maximum and balance of visibility, are shown in Theorem 1. For the balance property, we can see that the larger difference of the visibility of the two objects, the smaller upper bound for their PathSim similarity.
+
+**Theorem 1**: _Properties of PathSim:_
+
+1. _[leftmargin=*,noitemsep,topsep=0pt]_
+2. _Symmetric:_ \(s(x_{i},x_{j})=s(x_{j},x_{i})\)_._
+3. _Self-maximum:_ \(s(x_{i},x_{j})\in[0,1]\)_, and_ \(s(x_{i},x_{i})=1\)_._
+4. _Balance of Visibility:_ \(s(x_{i},x_{j})\leq\frac{\sqrt{M_{ii}/M_{jj}}+\sqrt{M_{jj}/M_{ii}}}{\sqrt{M_{ii} }+\sqrt{M_{jj}/M_{ii}}}\)_._
+
+See Proof in the Appendix.
+
+Under the definition of PathSim, we formally define our top-\(k\) similarity search problem as follows.
+
+**Definition 6**: _Top-\(k\) similarity search under PathSim. Given an information network \(G\) and the network schema \(T_{G}\), given a meta path \(\mathcal{P}=(\mathcal{P}_{l}\mathcal{P}_{l}^{-1})\), where \(\mathcal{P}_{l}=(A_{1}A_{2}\ldots A_{l})\), the top-\(k\) similarity search for an object \(x_{i}\in A_{1}\) is to find sorted \(k\) objects in the same type \(A_{1}\), such that \(s(x_{i},x_{j})\geq s(x_{i},x_{j}^{\prime})\), for any \(x_{j}^{\prime}\) not in the returning list and \(x_{j}\) in the returning list, where \(s(x_{i},x_{j})\) is defined as in Def. 4._
+
+Although using meta path-based similarity we can define similarity between two objects given _any_ round trip meta paths, the following theorem tells us a _very long_ meta path is not very meaningful. Indeed, due to the sparsity of real networks, objects that are similar may share no immediate neighbors, and longer meta paths will propagate similarities to remote neighborhoods. For example, as in the DBLP example, if we consider the meta path \(APA\), only two authors that are co-authors have a non-zero similarity score; but if we consider longer meta paths like \(APCPA\) or \(APTPA\), authors will be considered to be similar if they have published papers in a similar set of venues or sharing a similar set of terms no matter whether they have co-authored. But how far should we keep going? The following theorem tells us that a very long meta path may be misleading. We now use \(\mathcal{P}^{k}\) to denote a meta path repeating \(k\) times of the basic meta path pattern of \(\mathcal{P}\), e.g., \((ACA)^{2}=(ACACA)\).
+
+**Theorem 2**: _Limiting behavior of PathSim under infinity length meta path. Let meta path \(\mathcal{P}^{(k)}=(\mathcal{P}_{l}\mathcal{P}_{l}^{-1})^{k}\), \(M_{\mathcal{P}}\) be the commuting matrix for meta path \(\mathcal{P}_{l}\), and \(M^{(k)}=(M_{\mathcal{P}}M_{\mathcal{P}}^{T})^{k}\) be the commuting matrix for \(\mathcal{P}^{(k)}\), then by PathSim, the similarity between objects \(x_{i}\) and \(x_{j}\) as \(k\rightarrow\infty\) is:_
+
+\[\lim_{k\rightarrow\infty}s^{(k)}(i,j)=\frac{2\mathbf{r}(i)\mathbf{r}(j)}{ \mathbf{r}(i)\mathbf{r}(i)+\mathbf{r}(j)\mathbf{r}(j)}=\frac{2}{\frac{ \mathbf{r}(i)}{\mathbf{r}(j)}+\frac{\mathbf{r}(j)}{\mathbf{r}(i)}}\]
+
+_where \(\mathbf{r}\) is the primary eigenvector of \(M\), and \(\mathbf{r}(i)\) is the \(i_{th}\) item._
+
+See Proof in the Appendix.
+
+As primary eigenvectors can be used as authority ranking of objects [16], the similarity between two objects under an infinite meta path can be viewed as a measure defined on their rankings (\(\mathbf{r}(i)\) is the ranking score for object \(x_{i}\)). Two objects with more similar ranking scores will have higher similarity (e.g., SIGMOD will be similar to AAAI). Later experiments (Table 8) will show that this similarity, with the meaning of global ranking, is not that useful. Notice that, the convergence of PathSim with respect to path length is usually very fast and the length of 10 for networks of the scale of DBLP can almost achieve the effect of a meta path with an infinite length. Therefore, in this paper, we only aim at solving the top-\(k\) similarity search problem for a _relatively short_ meta path.
+
+Even for a relatively short length, it may still be inefficient in both time and space to materialize all the meta paths. Thus we propose in Section 3 materializing commuting matrices for short length meta paths, and concatenating them online to get longer ones for a given query.
+
+\begin{table}
+\begin{tabular}{|c|c|c|c|c|} \hline  & \multicolumn{2}{c|}{Jim} & Mary & Bob & Ann \\ \hline P-PageRank & \(\mathbf{0.3761}\) & \(0.0133\) & \(\mathbf{0.0162}\) & \(0.0046\) \\ SimRank & \(\mathbf{0.7156}\) & \(0.5724\) & \(\mathbf{0.7125}\) & \(0.1844\) \\ RW & \(\mathbf{0.8983}\) & \(0.0238\) & \(\mathbf{0.0390}\) & \(0\) \\ PRW & \(\mathbf{0.5714}\) & \(0.4444\) & \(\mathbf{0.5556}\) & \(0\) \\ PathSim & \(0.0826\) & \(\mathbf{0.8}\) & \(\mathbf{1}\) & \(0\) \\ \hline \end{tabular}
+\end{table}
+Table 3: Comparison of a set of similarity measures.
+
+## 3 Online Query Processing for Single Meta Path
+
+This section is on efficient top-_k PathSim_ similarity search for online queries, under a single meta path, with two algorithms proposed: _PathSim-baseline_ and _PathSim-pruning_, both returning _exact_ top-\(k\) results for the given query. The algorithm for multiple meta path combination with different weights is discussed in Appendix B. Note that the same methodology can be adopted by other meta path-based similarity measures, such as RW and PRW, by taking a different definition of commuting matrix accordingly.
+
+While the definition of meta path-based similarity search is flexible to accommodate different queries, it requires expensive computations (matrix multiplications), which is not affordable for online query processing in large-scale information networks. One possible solution is to materialize all the meta paths within a given length. Unfortunately, it is time and space expensive to materialize all the possible meta paths. For example, in the DBLP network, the similarity matrix corresponding to a length-4 meta path, \(APCPA\), for identifying similar authors publishing in common venues is a \(710K\times 710K\) matrix, whose non-empty elements reaches \(5G\), and requires storage size more than \(40G\) (up to \(4T\) for longer meta path between authors). Thus we propose the solution to partially materialize commuting matrices for short length meta paths, and concatenate them online to get longer ones for a given query, which returns search results in a reasonable response time while reduces the storage space significantly.
+
+### Single Meta Path Concatenation
+
+Given a meta path \(\mathcal{P}=(\mathcal{P}_{l}\mathcal{P}_{l}^{-1})\), where \(\mathcal{P}_{l}=(A_{1}\cdots A_{l})\), the commuting matrix for path \(\mathcal{P}_{l}\) is \(\mathcal{M}_{\mathcal{P}}=W_{A_{1}A_{2}}W_{A_{2}A_{3}}\cdots W_{A_{l-1}A_{l}}\), the commuting matrix for path \(\mathcal{P}\) is \(M=M_{\mathcal{P}}\mathcal{M}_{\mathcal{P}}^{T}\). Let \(n\) be the number of objects in \(A_{1}\). For a query object \(x_{i}\in A_{1}\), if we compute the top-\(k\) most similar objects \(x_{j}\in A_{1}\) for \(x_{i}\) on-the-fly, without materializing any intermediate results, computing \(M\) from scratch would be very expensive. On the other hand, if we have pre-computed and stored the commuting matrix \(M=M_{\mathcal{P}}\mathcal{M}_{\mathcal{P}}^{T}\), it would be a trivial problem to get the query results: We only need to locate the corresponding row in the matrix for the query \(x_{i}\), re-scale it using \((M_{ii}+M_{jj})/2\), and finally sort the new vector and return the top-\(k\) objects. However, fully materializing the commuting matrices for all possible meta paths is also impractical, since the space complexity (\(O(n^{2})\)) would prevent us from storing \(M\) for every meta path. Instead of taking the above extreme, we partially materialize commuting matrix \(M_{\mathcal{P}}^{T}\) for meta path \(\mathcal{P}_{l}^{-1}\), and compute top-\(k\) results online by concatenating \(\mathcal{P}_{l}\) and \(\mathcal{P}_{l}^{-1}\) into \(\mathcal{P}\) without full matrix multiplication.
+
+We then examine the concatenation problem, i.e., if the commuting matrix \(M\) for the full meta path \(\mathcal{P}\) is not pre-computed and stored, but the commuting matrix \(M_{\mathcal{P}}^{T}\) corresponding to the partial meta path \(\mathcal{P}_{l}^{-1}\) has been pre-computed and stored. In this case, we assume the main diagonal of \(M\), i.e., \(D=(M_{11},\ldots,M_{nn})\), is pre-computed and stored. Since for \(M_{ii}=M_{\mathcal{P}}(i,:)M_{\mathcal{P}}(i,:)^{T}\), the calculation only involves \(M_{\mathcal{P}}(i,:)\) itself, and only \(O(nd)\) in time and \(O(n)\) in space are required, where \(d\) is the average number of non-zero elements in each row of \(M_{\mathcal{P}}\) for each object. As the commuting matrices of \(\mathcal{P}_{l}\) and \(\mathcal{P}_{l}^{-1}\) are transpose to each other, we only need to store one of them in the sparse form. But from the efficiency point of view, we will keep both row index and column index for fast locating any rows and columns. In this study, we only consider concatenating the partial paths \(\mathcal{P}_{l}\) and \(\mathcal{P}_{l}^{-1}\) into the form \(\mathcal{P}=\mathcal{P}_{l}\mathcal{P}_{l}^{-1}\) or \(\mathcal{P}=\mathcal{P}_{l}^{-1}\mathcal{P}_{l}\). For example, given a pre-stored meta path \(APC\), we are able to answer queries for meta paths \(APCPA\) and \(CPAPC\). For our DBLP network, to store commuting matrix for partial meta path \(APC\) only needs around \(25M\) space, which is less than \(0.1\%\) of the space for materializing meta path \(APCPA\). Other concatenation forms that may lead to different optimization methods are also possible (e.g., concatenating several short meta paths). In the following discussion, we focus on the algorithms using the concatenation form \(\mathcal{P}=\mathcal{P}_{l}\mathcal{P}_{l}^{-1}\).
+
+### Baseline
+
+Suppose we know the commuting matrix \(M_{\mathcal{P}}\) for path \(P_{l}\), and the diagonal vector \(D=(M_{ii})_{i=1}^{n}\), in order to get top-\(k\) objects \(x_{j}\in A_{1}\) with the highest similarity for the query \(x_{i}\), we need to compute \(s(i,j)\) for all \(x_{j}\). The straightforward baseline is: (1) first apply vector-matrix multiplication to get \(M(i,:)=M_{\mathcal{P}}(i,:)M_{\mathcal{P}}^{T}\); (2) calculate \(s(i,j)=\frac{M(i,j)}{M(i,:)M(j,:)}\) for all \(x_{j}\in A_{1}\); and (3) sort \(s(i,j)\) to return the top-\(k\) list in the final step. When \(n\) is very large, the vector-matrix computation will be too time consuming to check every possible object \(x_{j}\). Therefore, we first select \(x_{j}\)'s that are not orthogonal to \(x_{i}\) in the vector form, by following the links from \(x_{i}\) to find 2-step neighbors in commuting matrix \(M_{\mathcal{P}}\), i.e., \(x_{j}\in CandidateSet=\{\bigcup_{y_{k}\in M_{\mathcal{P}}.neighbors(x_{i})}M_{ \mathcal{P}}^{T}.neighbors(y_{k})\}\), where \(M_{\mathcal{P}}.neighbors(x_{i})\)\(=\)\(\{y_{k}|M_{\mathcal{P}}(x_{i},y_{k})\neq 0\}\), which can be easily obtained in the sparse matrix form of \(M_{\mathcal{P}}\) that indexes both rows and columns. This will be much more efficient than pairwise comparison between the query and all the objects of that type. We call this baseline concatenation algorithm as _PathSim-baseline_ (See Algorithm 2).
+
+The _PathSim-baseline_ algorithm, however, is still time consuming if the candidate set is very large. Although \(M_{\mathcal{P}}\) can be relatively sparse given a short length meta path, after concatenation, \(M\) could be dense, i.e., the \(CandidateSet\) could be very large. Still, considering the query object and one candidate object represented by query vector and candidate vector, the dot product between them is proportional to the size of their non-zero elements. The time complexity for computing each candidate is \(O(d)\) on average and \(O(m)\) in the worst case, that is, \(O(nm)\) in the worst case for all the candidates, where \(n\) is the row size of \(M_{\mathcal{P}}\), i.e., the number of objects in type \(A_{1}\), and \(m\) the column size of \(M_{\mathcal{P}}\), i.e., the number of objects in type \(A_{l}\), and \(d\) the average non-zero element for each object in \(M_{\mathcal{P}}\). We now propose a co-clustering based top-\(k\) concatenation algorithm, by which non-promising target objects are dynamically filtered out to reduce the search space.
+
+### Co-Clustering Based Pruning
+
+In the baseline algorithm, the computational costs involve two factors. First, the more candidates to check, the more time the algorithm will take; second, for each candidate, the dot product of query vector and candidate vector will at most involve \(m\) operations, where \(m\) is the vector length. The intuition to speed up the search is to prune unpromising candidate objects using simpler calculations. Based on the intuition, we propose a co-clustering (i.e., clustering rows and columns of a matrix simultaneously) based path concatenation method, which first generates co-clusters of two types of objects for partial commuting matrix, then stores necessary statistics for each of the blocks corresponding to different co-cluster pairs, and then uses the block statistics to prune the search space. For better illustration, we call clusters of type \(A_{1}\) as **target clusters**, since the objects in \(A_{1}\) are the targets for the query; and call clusters of type \(A_{l}\) as **feature clusters**, since the objects in \(A_{l}\) serve as features to calculate the similarity between the query and the target objects. By partitioning \(A_{1}\) into different target clusters, if a whole target cluster is not similar to the query, then all the objects in the target cluster are likely not in the final top-\(k\) lists and can be pruned. By partitioning \(A_{l}\) into different feature clusters, cheaper calculations on the dimension-reduced query vector and candidate vectors can be used to derive the similarity upper bounds.
+
+This pruning idea is illustrated in Fig. 2 as follows. Given the partial commuting matrix \(M_{l}^{T}\) and its \(3\times 3\) co-clusters, and the query vector \(M_{l}(x_{i},:)\) for query object \(x_{i}\), first the query vector is compressed into the aggregated query vector with the length of 3, and the upper bounds of the similarity between the query and all the 3 target clusters are calculated based on the aggregated query vector and aggregated cluster vectors; second, for each of the target clusters, if they cannot be pruned, calculate the upper bound of the similarity between the query and each of the 3 candidates within the cluster using aggregated vectors; third, if the candidates cannot be pruned, calculate the exact similarity using the non-aggregated query vector and candidate vectors.
+
+The details of the co-clustering algorithm and the co-clustering based pruning algorithm, _PathSim-pruning_ are introduced in Appendix A. Experiments show that _PathSim-Pruning_ can significantly improve the query processing speed comparing with the baseline algorithm, without affecting the search quality.
+
+## 4 Experiments
+
+For the experiments, we use the bibliographic network extracted from DBLP and the Flickr network to show the effectiveness of the PathSim measure and the efficiency (Appendix A.1) of the proposed algorithms.
+
+### Data Sets
+
+We use the DBLP dataset downloaded in Nov. 2009 as the main test dataset. It contains over \(710K\) authors, \(1.2M\) papers, and \(5K\) venues (conferences/journals). After removing stopwords in paper titles, we get around \(70K\) terms appearing more than once. Our DBLP networks are built according to the network schema introduced in Example 2, except that there is no direct link between papers since DBLP provides very limited citation information. This dataset is referred as "full DBLP dataset". Two small subsets of the data (to alleviate the high computational costs of P-PageRank and SimRank) are used for the comparison with other similarity measures in effectiveness: (1) "DBIS dataset", which contains all the 464 venues and top-5000 authors from the database and information system area; and (2) "4-area dataset", which contains 20 venues and top-5000 authors from 4 areas: _database, data mining, machine learning_ and _information retrieval_[17], and cluster labels are given for all the 20 venues and a subset of 1713 authors.
+
+For additional case studies (See Appendix C), we construct a Flickr network from a subset of the Flickr data, which contains four types of objects: images, users, tags, and groups. Links exist between images and users, images and tags, and images and groups. We use 10,000 images from 20 groups as well as their related 664 users and 10284 tags appearing more than once to construct the network.
+
+### Effectiveness
+
+**1. Comparing _PathSim_ with other measures
+
+When a meta path \(\mathcal{P}=(\mathcal{P}_{l}\mathcal{P}_{l}^{-1})\) is given, other measures such as random walk (RW) and pairwise random walk (PRW) can be applied on the same meta path, and P-PageRank and SimRank can be applied on the sub-network extracted from \(\mathcal{P}\). For example, for the meta path \(CPAPC\) (\(CAC\) in short) for finding venues sharing the same set of authors, the bipartite graph \(M_{CA}\), derived from commuting matrix corresponding to \(CPA\) can be used in both P-PageRank and SimRank algorithms. In our experiments, the damping factor for P-PageRank is set as \(0.9\) and the one for SimRank is set as \(0.8\).
+
+First, a case study is shown in Table 4, which is applied on "DBIS dataset", under the meta path \(CAC\). One can see that for query "PKDD" (short for "Principles and Practice of Knowledge Discovery in Databases", a European data mining conference), P-PageRank favors venues with higher visibility, such as KDD and several well-known venues; SimRank prefers concentrated venues (i.e., a large portion of publications goes to a small set of authors) and returns many not well-known venues such as "Local Pattern Detection" and KDID; RW also favors highly visible objects such as KDD, but brings in fewer irrelevant venues due to that it utilizes merely one short meta path; PRW performs similar to SimRank, but brings in more not so well-known venues due to the short meta path it uses; whereas PathSim gives venues with similar area as well as similar reputation as PKDD, such as ICDM and SDM.
+
+We then labeled top-15 results for 15 queries from venue type (SIGMOD, VLDB, ICDE, PODS, EDBT, DASFAA, KDD, ICDM, PKDD, SDM, PAKDD, WWW, SIGIR, TREC and APWeb) in "DBIS dataset", to test the quality of the ranking lists given by 5 measures. We label each result object with relevance score as three levels: 0-non-relevant, 1-some-relevant, and 2-very-relevant. Then we use the measure nDCG (Normalized Discounted Cumulative Gain, with the value between 0 and 1, the higher the better) [9] to evaluate the quality of a ranking algorithm by comparing its output ranking results with the labeled ones (Table 5). The results show that PathSim gives the best ranking quality in terms of human intuition, which is consistent with the previous case study.
+
+Next, we study the performance of different single meta path-based similarity measures, including _PathSim_, RW, and PRW, in the task of clustering, where these measures use exactly the same information to determine the pairwise similarity between objects. Note the clustering problem is rather different from node-oriented similarity search but can still be used to roughly compare the sensitivity of the similarity measures. We use "4-area dataset" to evaluate the clustering performance, since this dataset naturally has 4 clusters, under the meta path \(CAC\) for venues and \(ACA\) for authors. We apply Normalized Cut [15] to the 3 similarity matrices, and use NMI (Normalized Mutual Information, with the value between 0 and 1, the higher the better) [16] to calculate the clustering accuracy for both venues and authors, and their weighted average accuracy over the two types. The average clustering accuracy results (based on 100 runs) for the venues-author network with different similarity measures are summarized in Table 6. It turns out that PathSim produces overall better performance in terms of weighted average of clustering accuracy in both types.
+
+Figure 2: Illustration of Pruning Strategy.
+
+## 2 Semantic meanings of different meta paths
+
+As we pointed out, different meta paths give different semantic meanings, which is one of the reasons that similarity definitions in homogeneous networks cannot be applied directly to heterogeneous networks. Besides the motivating example in the introduction section, Table 7 shows the author similarity under two scenarios for author Christos Faloutsos: _co-authoring papers_ and _publishing papers in the same venues_, represented by the meta paths \(APA\) and \(APCPA\) respectively. One can see that the first path returns co-authors who have strongest connections with Faloutsos (e.g., students and close collaborators) in DBLP, whereas \(APCPA\) returns those publishing papers in the most similar venues.
+
+## 3 The impact of path length
+
+The next interesting question is how the length of meta path impacts the similarity definition. Table 8 shows an example of venues similar to "SIGMOD" with three meta paths, using exactly the same basic meta path, but with different repeating times. These meta paths are \((CPAPC)^{2}\), \((CPAPC)^{4}\) and its infinity form (global ranking-based similarity). Notice that in \((CPAPC)^{2}\), two venues are similar if they share many similar authors who publish papers in _the same_ venues; while in \((CPAPC)^{4}\), the similarity definition of those venues will be further relaxed, namely, two venues are similar if they share many similar authors who publish papers in _similar_ venues. Since venue type only contains \(5K\) venues, we are able to get the full materialization commuting matrix for \((CPAPC)^{2}\). \((CPAPC)^{4}\) is obtained using meta path concatenation from \((CPAPC)^{2}\). The results are summarized in Table 8, where longer path gradually bring in more remote neighbors, with higher similarity score, and finally it degenerates into global ranking comparison. Through this study, we can see that the meta path with relatively short length is good enough to measure similarity, and a long meta path may even reduce the quality.
+
+Table 9 shows that short meta paths produce better similarity measures in terms of clustering accuracy. We checked two other meta paths, namely \(CPTPC\) and \(APTPA\), which give the same conclusion.
+
+## 5 Related Work
+
+Similarity measure has been widely studied in categorical, numerical, or mix-type data sets, such as cosine similarity defined on two vectors, Jaccard coefficient on two sets, and Euclidean distance on two numerical data points. Based on the traditional similarity measures, a recent study [19] proposes an efficient top-\(k\) similarity pair search algorithm, top-\(k\)-join, in relational database, which only considers similarity between tuples. Also widely studied are \(k\) nearest neighbor search in spatial data [11] and other high dimensional data [2], which aims at finding top-\(k\) nearest neighbors according to similarities defined on numerical features. However, these similarity definitions cannot be applied to networks.
+
+Similarity measures defined on homogeneous networks emerged recently. Personalized PageRank [10] is an asymmetrical similarity measure that evaluates the probability starting from object \(x\) to visit object \(y\) by randomly walking on the network with restart. More discussions on how to scale the calculation for online queries are in [6, 18], etc., and how to derive top-\(k\) answers efficiently is studied in [7]. SimRank [8] is a symmetric similarity measure defined on homogeneous networks, which can also be directly applied to bipartite networks. The intuition behind SimRank is propagating pairwise similarity to their neighboring pairs. Due to its computational complexity, there are many follow-up studies (e.g., [12]) on speeding up such calculations. SCAN [20] measures similarity of two objects by comparing their immediate neighbor sets.
+
+ObjectRank [1] and PopRank [13] first noticed that heterogeneous relationships could affect the random walk, and assigned different propagation factors to each type of object relationship to either derive a revised version of P-PageRank (ObjectRank) or a global PageRank (PopRank). However, such solutions only give one particular combination of all the possible meta paths using the fixed weights determined by the damping factor and propagation factors between different types. In our PathSim definition, users can freely specify the meta paths they are interested in and assign any weight to them. Random walk style similarity search is not adopted in PathSim, which overcomes the disadvantage of returning highly ranked objects rather than similar peers.
+
+\begin{table}
+\begin{tabular}{|c|c|c|c|} \hline  & RW & PRW & PathSim \\ \hline Venne NMI & 0.6159 & **0.8198** & 0.8116 \\ \hline Author NMI & 0.6486 & 0.6364 & **0.6501** \\ \hline Weighted Avg. NMI & 0.6485 & 0.6371 & **0.6507** \\ \hline \end{tabular}
+\end{table}
+Table 6: Clustering accuracy for single meta path-based similarity measures on “4-area dataset”.
+
+\begin{table}
+\begin{tabular}{|c|c|c|c|} \hline Rank & P-PageRank & SimRank & RW & PRW & PathSim \\ \hline
+1 & PKDD & PKDD & PKDD & PKDD \\
+2 & KDD & Local Pattern Detection & KDD & Local Pattern Detection & ICDM \\
+3 & ICDE & KDD & ICDM & DB Support for DM Appl. & SDM \\
+4 & VLDB & KDD & PAKDD & Constr-Bsd & -Bsd \\
+5 & SIGMOD & Large-Scale Paral. Data Min. & SDM & KDD \\
+6 & ICDM & SDM & TKDE & MCD & Data Min. Knowl. Disc. \\
+7 & TKDE & ICDM & SIGKDD Expl. & Pattern Detection and Discovery & SIGKDD Expl. \\
+8 & PAKDD & SIGKDD Expl. & ICDE & KSDM \\
+9 & SIGIRD & Constr-Bsd. Min. \& I induce. DB & SEBD (Italian Sympo. on Adv. DB) & WImBI (Web Intell. Meets Brain Inf.) & J. Intell. Syst. \\
+10 & CIKM & TKDD & CIKM & Large-Scale Paral. Data Min. & KDID \\ \hline \end{tabular}
+\end{table}
+Table 4: Case study of five similarity measures on “PKDD” on the “DBIS dataset”.
+
+\begin{table}
+\begin{tabular}{|c|c|c|c|} \hline  & RW & PRW & PathSim \\ \hline Venne NMI & 0.6159 & **0.8198** & 0.8116 \\ \hline Author NMI & 0.6486 & 0.6364 & **0.6501** \\ \hline Weighted Avg. NMI & 0.6485 & 0.6371 & **0.6507** \\ \hline \end{tabular}
+\end{table}
+Table 7: Top-10 most similar authors to “Christos Faloutsos” under different meta paths on “full DBLP dataset”.
+
+\begin{table}
+\begin{tabular}{|c|c|c|c|} \hline  & RW & PRW & PathSim \\ \hline Venne NMI & 0.6159 & **0.8198** & 0.8116 \\ \hline Author NMI & 0.6486 & 0.6364 & **0.6501** \\ \hline Weighted Avg. NMI & 0.6485 & 0.6371 & **0.6507** \\ \hline \end{tabular}
+\end{table}
+Table 6: Clustering accuracy for single meta path-based similarity measures on “4-area dataset”.
+
+## 6 Discussions
+
+In this study, we assume that users know how to choose meta path. In practice, there are several ways for a user to select the best meta path or meta path combinations. First, a user can make a choice based on her interest and domain knowledge. Second, she can have several experimental trials, such as those done in Section 4, and choose the best one according to her intuition. Third, she can label a small portion of data according to specific applications. For example, one can label similar objects or rank them, and then train the best meta path(s) and their weights by some learning algorithms. By doing so, one can automatically choose appropriate meta paths as well as the associated weights, and make the similarity search adaptable to different application scenarios. The problem on how to choose and weight different meta paths is similar to the feature selection process in machine learning. In-depth study for a systematic solution is left as a future research task.
+
+## 7 Conclusions
+
+We have introduced a novel and practical notion of _meta path-based similarity for heterogeneous information networks_. We comparatively and systematically examine different semantics of similarity measures in such networks and introduce a new meta path-based similarity measure to find similar objects of the same type in such networks. Meta paths give users flexibility to choose different meta paths and their combinations based on their applications. Moreover, we propose a new similarity measure, PathSim, under this framework, which produces overall better similarity qualities than the existing measures. Since meta paths can be arbitrarily given, it is unrealistic to fully materialize all the possible similarity results given different meta paths and their combinations. However, online calculation requires matrix multiplication, which is time consuming especially when the vector and matrix are not sparse. Therefore, we proposed an efficient solution that partially materializes several short meta paths and then applies online concatenation and combination among paths to give the top-\(k\) results for a query. Experiments on real data sets show the effectiveness of the similarity measure and the efficiency of our method. The framework of meta path-based similarity search in networks can be enhanced in many ways, e.g., weight learning for different meta paths, which may help provide accurate similarity measures in real systems and discover interesting relationships among objects.
+
+## References
+
+* [1] A. Balmin, V. Hristidis, and Y. Papakonstantinou. Objectrank: authority-based keyword search in databases. In _VLDB'04_, 564-575, 2004.
+* [2] S. Berchtold, B. Ertl, D. A. Keim, H.-P. Kriegel, and T. Seidl. Fast nearest neighbor search in high-dimensional space. In _ICDE'98_, 209-218, 1998.
+* [3] I. S. Dhillon, S. Mallelela, and D. S. Modha. Information-theoretic co-clustering. In _KDD'03_, 89-98, 2003.
+* [4] L. R. Dice. Measures of the amount of ecologic association between species. _Ecology_, 26(3):297-302, 1945.
+* [5] R. Fagin, A. Lotem, and M. Naor. Optimal aggregation algorithms for middleware. In _PODS'01_, 102-113, 2001.
+* [6] D. Fogaras, B. Racz, K. Csalogany, and T. Sarlos. Towards scaling fully personalized PageRank: algorithms, lower bounds, and experiments. _Int. Math._, 23(3):333-358, 2005.
+* [7] M. Gupta, A. Pathak, and S. Chakrabarti. Fast algorithms for topk personalized pagerank queries. In _WWW'08_, 1225-1226, 2008.
+* [8] G. Jeh and J. Widom. Simrank: a measure of structural-context similarity. In _KDD'02_, 538-543, 2002.
+* [9] K. Jarvelin and J. Kekalainen. Cumulated gain-based evaluation of IR techniques. _ACM TOIS_ 20(4):422-446, 2002.
+* [10] G. Jeh and J. Widom. Scaling personalized web search. In _WWW'03_, 271-279, 2003.
+* [11] M. Kolandouzan and C. Shahabi. Voronoi-based k nearest neighbor search for spatial network databases. In _VLDB'04_, 840-851, 2004.
+* [12] D. Lizorkin, P. Velikhov, M. Grinev, and D. Turdakov. Accuracy estimate and optimization techniques for simrank computation. _PVLDB_, 1(1):422-433, 2008.
+* [13] Z. Nie, Y. Zhang, J.-R. Wen, and W.-Y. Ma. Object-level ranking: bringing order to web objects. In _WWW'05_, 567-574, 2005.
+* [14] F. Pan, X. Zhang, and W. Wang. Crd: fast co-clustering on large datasets utilizing sampling-based matrix decomposition. In _SIGMOD'08_, 173-184, 2008.
+* [15] J. Shi, and J. Malik Normalized cuts and image segmentation. _IEEE Trans. on PAMI_, 22(8):888-905, 2000.
+* [16] Y. Sun, J. Han, P. Zhao, Z. Yin, H. Cheng, and T. Wu. Rankclus: integrating clustering with ranking for heterogeneous information network analysis. In _EDBT'09_, 565-576, 2009.
+* [17] Y. Sun, J. Han, J. Gao, and Y. Yu. iTopicModel: Information Network-Integrated Topic Modeling. In _ICDM'09_, 493-502, 2009.
+* [18] H. Tong, C. Faloutsos, J. Pan. Fast Random Walk with Restart and Its Applications. In _ICDM'06_, 613-622, 2006.
+* [19] C. Xiao, W. Wang, X. Lin, and H. Shang. Top-k set similarity joins. In _ICDE'09_, 916-927, 2009.
+* [20] X. Xu, N. Yuruk, Z. Feng, and T. A. J. Schweiger. Scan: a structural clustering algorithm for networks. In _KDD'07_, 824-833, 2007.
+
+\begin{table}
+\begin{tabular}{|c|c|c|c|c|c|c|c|} \multicolumn{3}{c}{(a) Path: \((CPAPC)^{2}\)} & \multicolumn{3}{c}{(b) Path: \((CPAPC)^{\infty}\)} \\ \hline Rank & Veme & Score & Rank & Veme & Score & Rank & Veme & Score \\ \hline
+1 & SIGMOD Conference & 1 & 1 & SIGMOD Conference & 1 & 1 & SIGMOD Conference & 1 \\
+2 & VLDB & 0.981 & 2 & VLDB & 0.997 & 2 & AAAI & 0.9999 \\
+3 & ICDE & 0.949 & 3 & ICDE & 0.996 & 3 & ESA & 0.9999 \\
+4 & TKDE & 0.650 & 4 & TKDE & 0.787 & 4 & IEEE Trans. on Commun. & 0.9999 \\
+5 & SIGMOD Record & 0.630 & 5 & SIGMOD Record & 0.686 & 5 & STACS & 0.9997 \\
+6 & IEEE Data Eng. Bull. & 0.530 & 6 & PODS & 0.586 & 6 & PODC & 0.9996 \\
+7 & PODS & 0.467 & 7 & KDD & 0.553 & 7 & NIPS & 0.9993 \\
+8 & ACM Trans. Database Syst. & 0.429 & 8 & CIKM & 0.5400 & 8 & Comput. Geom. & 0.9992 \\
+9 & EDBT & 0.420 & 9 & IEEE Data Eng. Bull. & 0.532 & 9 & ICC & 0.9991 \\
+10 & CIKM & 0.410 & 10 & J. Comput. Syst. Sci & 0.463 & 10 & ICDE & 0.9984 \\ \hline \end{tabular}
+\end{table}
+Table 8: Top-10 similar venues to “SIGMOD” under meta paths with different lengths on “full DBLP dataset”.
+
+(a) Path: \((CPAPC)^{2}\)
+
+\begin{table}
+\begin{tabular}{|c|c|c|c|} \hline  & \(CAC\) & \((CAC)^{*}\) & \((CAC)^{*}\) \\ \hline Veme NMI & **0.816** & 0.4603 & 0.4351 \\ \hline  & \(ACA\) & \((ACA)^{2}\) & \((ACA)^{2}\) \\ \hline Auther NMI & **0.6501** & 0.6091 & 0.5346 \\ \hline \end{tabular}
+\end{table}
+Table 9: Impacts of length of meta path on clustering accuracy on the “4-area dataset”.
+
+## Appendix A Details of Co-Clustering Based Pruning Algorithm
+
+### Block-wise Commuting Matrix Materialization
+
+The first problem is how to generate these clusters for each commuting matrix \(M_{\mathcal{P}}\). Since one commuting matrix can be used for the concatenation into two longer meta paths, i.e., \(M_{\mathcal{P}}M_{\mathcal{P}}^{T}\) and \(M_{\mathcal{P}}^{T}M_{\mathcal{P}}\), we hope to find co-clusters of feature cluster and target cluster, within which all values are similar to each other. We use a greedy KL-divergence based co-clustering method (summarized in Algorithm 1), which is similar to the information-theoretic co-clustering proposed in [3], but simplifies the feature space for each object by merely using the feature cluster information. For example, for \(\mathcal{P}_{l}=(APC)\), we will use the conditional probability of author clusters appearing in some conference \(c\), say \(p(\hat{A}_{u}|c=``VLDB")\), as the feature for conference \(c\), use the conditional probability of author clusters in some conference cluster \(\hat{C}_{v}\), say \(p(\hat{A}_{u}|\hat{C}_{v}=``DB")\), as the feature for conference cluster \(\hat{C}_{v}\), and assign the conference to the conference cluster with the minimum KL-divergence. The adjustment is the same for author type given current conference clusters. The whole process is repeated for conference type and author type alternately, until the clusters do not change any more.
+
+The time complexity of Algorithm 1 is \(O(t(m+n)(UV))\), where \(t\) is the number of iterations, \(m\) and \(n\) are the number of objects for feature type and target type, \(U\) and \(V\) are the numbers of clusters for feature type and target type. Compared with the original \(O(mn(U+V))\) algorithm in [3], it is much more efficient. Sampling-based variation algorithm such as in [14] can be applied for further faster co-clustering. In our experiment setting, we will select objects with higher degrees for the clustering, and assign those with smaller degrees to the existing clusters.
+
+```
+0: Commuting Matrix \(M_{\mathcal{P}}^{T}\), number of feature clusters (row clusters) \(U\), number of target clusters (column clusters) \(V\)
+0: row clusters \(\{R_{u}\}_{u=1}^{U}\), column clusters \(\{C_{v}\}_{v=1}^{V}\)
+1: //Initialization:
+2: Randomly assign row objects into \(\{R_{u}\}_{u=1}^{U}\);
+3: Randomly assign column objects into \(\{C_{v}\}_{v=1}^{V}\);
+4:repeat
+5: //get center vector of each \(R_{u}\):
+6: \(f(R_{u})=\frac{1}{|R_{u}|}\sum_{v=1}^{V}M_{\mathcal{P}}^{T}(R_{u},C_{v})\);
+7: //Adjust row objects
+8:foreach object \(x_{i}\) in row objects do
+9: \(f(x_{i})=\sum_{v=1}^{V}M_{\mathcal{P}}^{T}(x_{i},C_{v})\);
+10: assign \(x_{i}\) into \(R_{u}\), \(u=\arg\min_{k}KL(f(x_{i})||f(R_{u}))\);
+11:endfor
+12: //get center vector of each \(C_{v}\):
+13: \(f(C_{v})=\frac{1}{|C_{v}|}\sum_{u=1}^{V}M_{\mathcal{P}}^{T}(R_{u},C_{v})\)
+14: //Adjust column objects
+15:foreach object \(y_{i}\) in row objects do
+16: \(f(y_{j})=\sum_{v=1}^{U}M_{\mathcal{P}}(R_{u},y_{j})\);
+17: assign \(y_{j}\) into \(C_{v}\), \(v=\arg\min_{l}KL(f(y_{j})||f(C_{v}))\);
+18:endfor
+19:until\(\{R_{u}\},\{C_{v}\}\) do not change significantly.
+```
+
+**Algorithm 1** Greedy Co-Clustering Algorithm
+
+Once the clusters for each type of objects are obtained, the commuting matrix can be decomposed into disjoint blocks. To facilitate further concatenation on two meta paths for queries, necessary statistical information is stored for each block. For each block \(b\) denoted by row cluster \(R_{u}\) and column cluster \(C_{v}\), we store:
+
+1. Element sum of each block \(T^{\{U\times V\}}_{v}\):
+2. \(t_{uv}=\sum_{i\in R_{u}}\sum_{j\in C_{v}}M_{\mathcal{P}}^{T}(i,j)\);
+3. Sum of row vectors (1-norm of each column vector) of each block \(T^{\{U\times m\}}_{1}:t_{uv,1}(j)=\sum_{i\in R_{u}}M_{\mathcal{P}}^{T}(i,j)\), for \(j\in C_{v}\);
+4. Square root of sum of square of row vectors (2-norm of each column vector) of each block \(TT^{\{U\times m\}}_{1}\):
+
+\(t^{2}_{uv,1}(j)=\sqrt{\sum_{i\in R_{u}}(M_{\mathcal{P}}^{T}(i,j))^{2}}\), for \(j\in C_{v}\);
+5. Sum of column vectors (1-norm of each row vector) of each block \(T^{\{n\times V\}}_{2}\):
+
+5. Square root of sum of square of column vectors (2-norm of each row vector) of each block \(TT^{\{n\times V\}}_{2}\):
+
+\(t^{2}_{uv,2}(i)=\sqrt{\sum_{j\in C_{v}}(M_{\mathcal{P}}^{T}(i,j))^{2}}\), for \(i\in R_{u}\).
+
+**2. Pruning Strategy in Path Concatenation**
+
+Now let's focus on how we can get top-\(k\) results efficiently for a query given the materialized block-wise commuting matrix. The intuition is that we first check the most promising target cluster, then if possible, prune the whole target cluster; if not, we first use simple calculations to decide whether we need to further calculate the similarity between the query and the candidate object, then compute the exact similarity value using more complex operations only for those needed.
+
+**Theorem 3**: **Bounds for block-based similarity measure approximation.** _Given a query object \(x\), the query vector is \(\mathbf{x}=M_{\mathcal{P}}(x,:)\). Let \(D\) be the diagonal vector of \(M\), let \(\hat{\mathbf{x}}\) be the compressed query vector given feature clusters \(\{R_{u}\}_{u=1}^{U}\), where \(\hat{\mathbf{x}}_{1}(u)=\max_{j\in R_{u}}\{\mathbf{x}(j)\}\), and let \(\hat{\mathbf{x}}_{2}\) be the 2-norm query vector given feature clusters \(R_{u}\), where \(\hat{\mathbf{x}}_{2}(u)=\sqrt{\sum_{j\in R_{u}}\mathbf{x}(j)^{2}}\), the similarity between \(x\) and target cluster \(C_{v}\), and the similarity between \(x\) and candidate \(y\in C_{v}\) can be estimated using the following upper bounds:_
+
+1. _prepound 1:_ \[\forall y\in C_{v},s(x,y)\leq s(x,C_{v})=\sum_{y\in C_{v}}s(x,y)\leq\frac{2 \mathbf{x}_{1}^{T}T(i,v)}{D(x)+1}\text{;}\]
+2. _prepound 2:_ \(\forall y\in C_{v},s(x,y)\leq\frac{2\mathbf{x}_{1}^{T}TT_{1}(i,y)}{D(x)+D(y)}\). See Proof in the Appendix D. \(\qed\)
+
+In Theorem 3, the upper bound for \(s(x,C_{v})\) can be used to find the most promising target clusters as well as to prune target clusters if it is smaller than the lowest similarity in the current top-\(k\) results. The upper bound for \(s(x,y)\) can be used to prune target objects that are not promising, which only needs at most \(U\) times calculation, whereas the exact calculation needs at most \(m\) times calculation. Here, \(U\) is the number of feature clusters and \(m\) is the number of feature objects, i.e., objects of type \(A_{l}\).
+
+The search strategy is to first sort the target clusters according to their upper bound of the similarity between the query \(x\) and the cluster \(C_{v}\), i.e., \(s(x,C_{v})\), in a decreasing order. The higher the similarity then more likely this cluster contains more similar objects to \(x\). It is very critical to use the order to check the most promising target clusters first, by which the most desirable objects are retrieved at an early stage and the upper bounds then have stronger power to prune the remaining candidates. When a new target cluster needsto be checked, the upper bound can be used to prune the whole target cluster and all the remaining target clusters, if it is smaller than the \(k\)-th value of the current top-\(k\) list. Next, when going to check the candidates within the target cluster, the upper bound between query object \(x\) and candidate \(y\) can be used to prune non-promising candidates if it is smaller than the current threshold. The algorithm _PathSim-pruning_ is summarized in Algorithm 3. On Line 5, \(min(S)\) is the lowest similarity in the current top-k result set \(S\). Similar to _PathSim-baseline_ (Algorithm 2), before the pruning steps, we still need to first derive the candidate set. Compared with the baseline algorithm, the pruning-based algorithm at most checks the same number of candidates with the overhead to calculate the upper bounds. In practice, a great number of candidates can be pruned, and therefore the performance can be enhanced.
+
+```
+0: Query \(x_{i}\), Commuting Matrix \(M_{\mathcal{P}}\), Diagonal Vector \(D\), top-\(k\)\(K\)
+0: Top-\(k\) List \(SortList\)
+1:\(CandidateSet=\emptyset\);
+2:foreach\(y_{k}\in M_{\mathcal{P}}.neighbors(x_{i})\)do
+3:foreach\(x_{j}\in M_{\mathcal{P}}^{T}.neighbors(y_{k})\)do
+4:\(CandidateSet=CandidateSet\cup\{x_{j}\}\);
+5:endfor
+6:endfor
+7:\(List=\emptyset\);
+8:foreach\(x_{j}\in CandidateSet\)do
+9:\(value=2*M_{\mathcal{P}}(i,:)M_{\mathcal{P}}(j,:)^{T}/(D(i)+D(j))\);
+10:\(List.update(x_{j},value,K)\);
+11:endfor
+12:\(List.sort()\);
+13:\(SortList=List.topk(K)\);
+14:return \(SortList\);
+```
+
+**Algorithm 2** (PathSim-Baseline) Vector-Matrix Multiplication Based Path Concatenation
+
+### Efficiency Comparison
+
+The time complexity for SimRank is \(O(KN^{2}d^{2})\), where \(K\) is the number of iterations, \(N\) is the total number of objects, and \(d\) is the average neighbor size; the time complexity for calculating P-PageRank for one query is \(O(KNd)\), where \(K,N,d\) has the same meaning as in SimRank; whereas the time complexity for PathSim using \(PathSim\)\(baseline\) for single query is \(O(nd)\), where \(n<N\) is the number of objects in the target type, \(d\) is the average degree of objects in target type for partial commuting matrix \(M_{\mathcal{P}}\). The time complexity for RW and PRW are the same as PathSim. We can see that similarity measure only using one meta path is much more efficient than those also using longer meta paths in the network (e.g., SimRank and P-PageRank).
+
+In this sub-section, two algorithms proposed in Section 3, _i.e., PathSim-baseline_ and _PathSim-pruning_, are compared, for efficiency study under different meta paths, namely, \(CPAPC\), \((CPAPC)^{2}\) and \(APCPA\) (denoted as \(CAC\), \(CACAC\) and \(ACA\) for short). For the co-clustering algorithm, the number of clusters for authors is set as 50, and that for conferences as 20. It is easy to see that the more clusters used, the more accurate the upper bounds would be, however the longer the calculation for the upper bounds would be. A trade-off should be made to decide the best number of clusters. Due to the limited space, we do not discuss the issue in this paper.
+
+First, we check the impacts of the number of neighbors of the query on the execution time. Note, a query object with higher degree usually leads to larger number of neighbors. Therefore, two test query sets are selected based on their degrees to test the execution time for each meta path: one is of top-20 objects and the other is of 1001th-1020th objects according to their link degrees. We compare the performance of the two algorithms under three meta paths. Each query is executed 5 times and the output time is the total average execution time within each query set, and the results are summarized in Figure 3. From the results, one can see (1) _PathSim-pruning_ is more efficient than _PathSim-baseline_; (2) the improvement rate depends on the meta path, the denser the corresponding commuting matrix, the higher rate _PathSim-pruning_ can improve; and (3) the improvement rate also depends on the queries, the more neighbors of a query, the higher rate _PathSim-pruning_ can improve. In Figure 4, we compare the efficiency under different top-\(k\)'s (\(k=5,10,20\)) for _PathSim-pruning_ using query set 1. Intuitively, a smaller top-\(k\) has stronger pruning power, and thus needs less execution time, as demonstrated.
+
+Now we compare the pruning power of _PathSim-pruning_ vs. _PathSim-baseline_ by considering two factors: the size of the neighbors of a query (Fig. 5) and the density of the partial commuting matrix \(M_{\mathcal{P}}\) (Fig. 6). 500 queries are randomly chosen for two meta paths (\(CAC\) and \(CACAC\)), and the execution time is averaged with 10 runs. The results show that the execution time for _PathSim-baseline_ is almost linear to the size of the candidate set, and the improvement rate for _PathSim-pruning_ is larger for queries with more neighbors, which requires more calculation for exact dot product operation between a query vector and candidate vectors. Also, the denser that the commuting matrix corresponding to the partial meta path (\(M_{CPAPC}\) in comparison with \(M_{CPA}\)), the
+
+Figure 3: _PathSim-baseline vs. PathSim-pruning on “full DBLP dataset”._
+
+greater the pruning power. The improvement rates are \(18.23\%\) and \(68.04\%\) for the two meta paths.
+
+## Appendix B Multiple Meta Path Combination
+
+In Section 3, we presented algorithms for similarity search in single meta path. Now, we present a solution to combine multiple meta paths together. Formally, given \(r\) round trip meta paths from Type \(A\) back to Type \(A\), \(\mathcal{P}_{1},\mathcal{P}_{2},\ldots,\mathcal{P}_{r}\), and their corresponding commuting matrix \(M_{1},M_{2},\ldots,M_{r}\), with weights \(w_{1},w_{2},\ldots,w_{r}\) specified by users, the combined similarity between objects \(x_{i},x_{j}\in A\) are defined as: \(\mathit{scomb}(x_{i},x_{j})=\sum_{l=1}^{r}w_{l}sl_{l}(x_{i},x_{j})\), where \(s_{l}(x_{i},x_{j})=\frac{2M_{l}(x_{i},j)}{M_{l}(i,i)+M_{l}(j,j)}\).
+
+ages for a query image. Let "I" represent image, "T" tags that associated with each image, and "G" groups that each image belongs to. Two meta paths are used and compared. The first is \(ITI\), which means common tags are used by two images at evaluation of their similarity. The results are shown in Fig. 7. The second meta path is \(ITIGITI\), which means tags similarities are further measured by their shared groups, and two images could be similar even they do not share many exact same tags as long as these tags are used by many images of the same groups. One can see that the second meta path gives better results than the first one as shown in Fig. 8, where the first image is the input query. This is likely due to that the latter meta path provides additional information related to image groups, and thus improves the similarity measure between images.
+
+**Discussion.** The Flickr network is an interesting example that goes beyond the relational data. Our running example of bibliographic network can be viewed as a network constructed from relational data. So, naturally, it leads to two questions: (1) one may wonder whether the meta path-based top-\(k\) similarity search can be applied to relational databases. The answer to this question is "Yes", if we treat data from multiple relations as information networks. For example, to find the students most similar to a given student, one can view multiple relations as interconnected information networks and meta-paths to be selected can be based on the course taken, venues of the publications, advisors, or their weighted combinations. (2) One may also wonder whether the meta path-based similarity search can go far beyond the network formed based on relational data. This case study on the Flickr network shows that the analysis of heterogeneous information networks can go far beyond typical relational data since this network consists of links connecting photos with bags of terms and groups. There are many networks that cannot be constructed from relational data. For example, a news/blog network contains links among themes, categories, time, locations, authors, terms, pictures, and so on, beyond relational data. Similarity search in such networks can be readily handled under the framework presented in this study.
+
+## Appendix D Proofs of Theorems
+
+Here are the proofs of the theorems introduced in the previous sections.
+
+**Theorem 1: Properties of PathSim.**
+
+Proof.: (1) \(s(x_{i},x_{j})=\frac{2M_{ij}}{M_{ii}+M_{jj}}=\frac{2M_{ii}}{M_{ii}+M_{jj}}=s(x_ {j},x_{i})\), since \(M_{ij}=M_{\mathcal{P}}(i,:)\cdot M_{i}(j,:)=M_{i}(j,:)\cdot M_{i}(i,:)=M_{ji}\), where - means the dot product of two vectors.
+
+(2) Let \(M_{i}(:,i)=(a_{1},a_{2},\ldots,a_{p})\), \(M_{i}(j,:)=(b_{1},b_{2},\ldots,b_{p})\), easy to see \(a_{k},b_{k}\) are nonnegative for all \(1\leq k\leq p\), then \(M_{ij}=\sum_{k=1}^{p}a_{k}b_{k}\geq 0\), \(M_{ii}=\sum_{k=1}^{p}a_{k}^{2}>0\) (no dangling object), and \(M_{ij}=\sum_{k=1}^{p}b_{k}^{2}>0\), therefore \(s(x_{i},x_{j})\geq 0\); also, \(\sum_{k=1}^{p}a_{k}^{2}+\sum_{k=1}^{p}b_{k}^{2}\geq 2\sum_{k=1}^{p}a_{k}b_{k}\), with equality holding when \(a_{k}=b_{k}\) for every \(k\), therefore \(s(x_{i},x_{j})\leq 1\), and \(s(x_{i},x_{j})=1\).
+
+(3) \(M_{ij}=\sum_{k}a_{k}b_{k}\leq\sqrt{\sum_{k}a_{k}^{2}\sum_{k}b_{k}^{2}}=\sqrt{ M_{ii}M_{jj}}\) (by Cauchy-Schwarz inequality), then \(s(x_{i},x_{j})\leq\frac{2(P^{k}P^{T}(x_{i})^{k})}{(P^{k}P^{T}(x_{i})+PD^{k}P^{T} (j,j))\Delta_{i}^{k}}\), and \(\lim\limits_{k\rightarrow\infty}s_{ij}^{(k)}=\frac{2r(i)r(j)}{r(i)(j+r)(j)(r)(j) (r)}\). 
+
+**Theorem 2: Limits behavior of PathSim under infinity length meta path.**
+
+Proof.: Since \(M=(M_{\mathcal{P}}M_{\mathcal{P}}^{T})\) is real symmetric, it can be decomposed as \(M=PDP^{T}\), where \(D\) is a diagonal matrix with the values of eigenvalues of \(M\), \(P\) is an orthogonal matrix composed of eigenvectors corresponding to eigenvalues in \(D\). Let \(\mathbf{r}\) be the first column in \(P\), then \(M^{k}=PD^{k}P^{T}\). Let \(s_{ij}^{(k)}=\frac{2M^{k}(i,j)}{M^{k}(i,j)+M(j,:)}\), \(\lambda_{1}\) be the largest eigenvalue of \(M\), then \(s_{ij}^{(k)}=\frac{2(P^{k}P^{T}(x_{i})^{k})(i,j)}{(PD^{k}P^{T}(i,i)+PD^{k}P^{T} (j,j))\Delta_{i}^{k}}\), and \(\lim\limits_{k\rightarrow\infty}s_{ij}^{(k)}=\frac{2r(i)r(j)}{r(i)(j+r)(j)(r)}\). 
+
+**Theorem 3: Bounds for block-based similarity measure approximation.**
+
+Proof.: 1. \(\sum_{y\in C_{i}}s(x,y)=\sum_{y\in C_{i}}\frac{2x^{T}y}{(Dx)+D(y)}\leq\frac{2x^ {T}\sum_{y\in C_{i}}\mathbf{y}}{D(x)+1}=\sum_{u}\frac{2(\mathbf{k}(y)^{T} \sum_{y\in C_{i}}\mathbf{y}(R_{u})}{D(x)+1}\leq\sum_{u}\frac{2\mathbf{k}_{1}(u )(T_{u},u)}{D(x)+1}=\frac{2\mathbf{k}_{1}^{T}(T_{u},v)}{D(x)+1}\), since according to Holder's Inequality, \(\mathbf{a}^{T}\mathbf{b}\leq||\mathbf{a}||_{\infty}||\mathbf{b}||_{1}\).
+
+2. \(s(x,y)=\frac{2x^{T}y}{D(x)+D(y)}=\frac{2\sum_{u}\mathbf{x}(R_{u})^{T}\mathbf{y }(R_{u})}{D(x)+D(y)}\). Since \(\mathbf{a}^{T}\mathbf{b}\leq||\mathbf{a}||_{2}||\mathbf{b}||_{2}\) according to Cauchy-Schwarz inequality, then the above formula \(\leq\frac{2\sum_{u}\mathbf{x}(\mathbf{x}_{i})T(t_{u},u)}{D(x)+D(y)}=\frac{2 \mathbf{k}_{1}^{T}T(t_{u},v)}{D(x)+D(y)}\). 
+
+## Appendix E Acknowledgement
+
+The authors would like to thank Lu Liu, Fabio Fumarola, Yintao Yu and Ziyu Guan for their valuable comments and suggestions.
+
+The work was supported in part by U.S. National Science Foundation grants IIS-09-05215, the U.S. Army Research Laboratory under Cooperative Agreement No. W911NF-09-2-0053 (NS-CTA), and MIAS, a DHS-IDS Center for Multimodal Information Access and Synthesis at UIUC. The views and conclusions contained in this document are those of the authors and should not be interpreted as representing the official policies, either expressed or implied, of the Army Research Laboratory or the U.S. Government. The U.S. Government is authorized to reproduce and distribute reprints for Government purposes notwithstanding any copyright notation here on.
+
+Figure 8: Top-\(6\) images in Flickr network under meta path \(ITIGITI\).
+
+Figure 7: Top-\(6\) images in Flickr network under meta path \(ITI\).
