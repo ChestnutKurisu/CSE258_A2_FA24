@@ -1,0 +1,667 @@
+\documentclass[sigconf]{acmart}
+
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{multirow}
+\usepackage{hyperref}
+
+
+%%
+%% \BibTeX command to typeset BibTeX logo in the docs
+\AtBeginDocument{%
+  \providecommand\BibTeX{{%
+    Bib\TeX}}}
+
+\acmConference{}{}{}{}
+\setcopyright{none}
+\acmBooktitle{}
+
+\begin{document}
+
+\title{Recommender System for Clean Technology Investment to Maximize Impact on Climate Change}
+
+\author{Param Somane}
+\email{psomane@ucsd.edu}
+\affiliation{%
+  \institution{University of California, San Diego}
+  \city{La Jolla}
+  \state{CA}
+  \country{USA}
+}
+
+\author{Anushri Eswaran}
+\email{aeswaran@ucsd.edu}
+\affiliation{%
+  \institution{University of California, San Diego}
+  \city{La Jolla}
+  \state{CA}
+  \country{USA}
+}
+
+\author{Yashraj Gavhane}
+\email{ygavhane@ucsd.edu}
+\affiliation{%
+  \institution{University of California, San Diego}
+  \city{La Jolla}
+  \state{CA}
+  \country{USA}
+}
+
+\settopmatter{printacmref=false, printccs=false, printfolios=false, printacmref=false} % Removes ACM reference format
+\renewcommand\footnotetextcopyrightpermission[1]{} % Removes footnote with copyright information
+
+\renewcommand{\shortauthors}{Somane, Eswaran, and Gavhane}
+
+\begin{abstract}
+Climate change poses significant challenges requiring substantial investment in clean technologies. This paper presents a comprehensive recommender system designed to advise investors on optimal clean technology sectors for investment, considering where, how much, and when to invest to maximize impact on climate change mitigation and societal well-being. Leveraging a rich dataset of global clean technology fundraisers and incorporating macroeconomic, social, and environmental indicators, we perform extensive exploratory data analysis, feature engineering, and develop predictive models for investment recommendations. Our system integrates text embeddings, time-series forecasting using Prophet and LightGBM, and evaluates model performance using metrics such as RMSE and MAE. We also analyze the alignment between funding allocation and greenhouse gas emissions by sector, identifying potentially underserved areas for impactful investment.
+\end{abstract}
+
+\begin{CCSXML}
+<ccs2012>
+<concept>
+<concept_id>10002944.10011123.10011674</concept_id>
+<concept_desc>General and reference~Document types</concept_desc>
+<concept_significance>500</concept_significance>
+</concept>
+</ccs2012>
+\end{CCSXML}
+
+\ccsdesc[500]{General and reference~Document types}
+
+\keywords{Recommender System, Clean Technology Investment, Climate Change, Time-Series Forecasting, Feature Engineering, Environmental Indicators}
+
+\maketitle
+
+\section{Introduction}
+
+Climate change is one of the most pressing global challenges of our time, necessitating substantial investments in clean technology sectors to mitigate its effects and promote sustainable development. Investors are increasingly seeking data-driven insights to guide their investment decisions in clean technology, aiming to maximize both environmental impact and financial returns.
+
+This paper presents a comprehensive recommender system designed to advise investors on optimal investment strategies in clean technology sectors. The system aims to answer critical questions such as which sectors to invest in, where geographically, how much to invest, and when to invest to maximize impact on climate change mitigation and societal well-being.
+
+We leverage a rich dataset of global clean technology fundraisers, enriched with macroeconomic, social, and environmental indicators. Through extensive exploratory data analysis and feature engineering, we uncover key patterns and correlations that inform our predictive modeling. Our system integrates advanced machine learning techniques, including text embeddings using Sentence Transformers, time-series forecasting with Prophet and LightGBM, and interaction term creation for capturing complex relationships.
+
+We evaluate our models using standard metrics and perform an analysis of funding allocation versus greenhouse gas emissions by sector to identify potentially underserved areas for impactful investment. Our findings provide valuable insights for investors aiming to make data-driven decisions in the clean technology space.
+
+\section{Related Work}
+
+Prior research has explored investment decision-making in clean technology using machine learning and recommender systems. Kraemer-Eis et al.~\cite{KraemerEisBotsariLangPal2023} utilized supervised machine learning to classify European cleantech firms in the Orbis database, improving sector mapping and highlighting machine learning's potential in identifying investment opportunities.
+
+Zhao et al.~\cite{ZhaoZhangWang2015} proposed a risk-aware recommendation framework for venture capital investment, integrating risk management to balance expected returns and risks, addressing challenges like data sparsity and risk hedging.
+
+Luef et al.~\cite{LuefOhrfandlSacharidisWerthner2020} developed a recommender system for early-stage enterprise investment, matching investors with startups based on profiles and histories using collaborative filtering.
+
+Lerner and Nanda~\cite{LernerNanda2020} critiqued venture capital's narrow focus on certain sectors, underscoring the need to expand investment into areas like clean energy and new materials that offer broader societal benefits.
+
+Zhou et al.~\cite{ZhouRenMedoZhang2007} explored bipartite network projection for recommendation systems, principles applicable to investment recommendations in clean technology sectors.
+
+Jang et al.~\cite{JangLeeYoon2020} examined how venture capital investment affects startups' sustainable growth, emphasizing the importance of considering startup characteristics like absorptive capacity in investment decisions.
+
+Our work differs by integrating macroeconomic, social, and environmental indicators into the investment recommendation process to maximize climate impact and societal well-being. We incorporate diverse features relevant to the clean technology domain and leverage advanced machine learning techniques such as text embeddings~\cite{reimers-2019-sentence-bert}, time-series forecasting with Prophet~\cite{taylor2018forecasting} and LightGBM~\cite{ke2017lightgbm}, and feature engineering.
+
+Unlike the European-focused dataset in Kraemer-Eis et al.~\cite{KraemerEisBotsariLangPal2023}, our global dataset offers a more comprehensive investment landscape. While prior systems~\cite{ZhaoZhangWang2015,LuefOhrfandlSacharidisWerthner2020} focus on matching investors to startups based on historical data, our approach emphasizes aligning investment with environmental impact, identifying underfunded sectors with high greenhouse gas emissions.
+
+By integrating environmental indicators such as greenhouse gas emissions per capita~\cite{OWIDTotalGHGPerCapita2024}, renewables share~\cite{OWIDRenewableEnergy2023}, and temperature anomalies~\cite{OWIDTempAnomaly2024}, our recommender system prioritizes investments that significantly contribute to climate change mitigation. This addresses the gap highlighted by Lerner and Nanda~\cite{LernerNanda2020} regarding the need for venture capital to support a broader range of innovative sectors with societal benefits.
+
+Our work builds upon prior research by incorporating a multidimensional perspective on clean technology investment, leveraging advanced machine learning models, and focusing on maximizing environmental impact, contributing to more effective investment strategies aligned with global sustainability goals.
+
+\section{Dataset Creation and Preparation}
+
+\subsection{Data Collection Methodology}
+
+We developed a comprehensive dataset by scraping newsletters and blog posts from climate-focused websites, specifically \textit{CTVC by Sightline Climate}~\cite{CTVC2024} and \textit{Keep Cool}~\cite{KeepCool2024}, collected up to February 5, 2024. We utilized Selenium for web scraping, extracting fundraiser information such as entity names, amounts raised, dates, descriptions, and associated links.
+
+To extract structured information from unstructured text, we employed GPT-4 for natural language processing. The model was prompted to parse the content and output a tabular representation of the fundraisers, including classification into clean technology sectors.
+
+\subsection{Data Cleaning and Processing}
+
+We performed data cleaning steps to ensure accuracy and consistency:
+
+\begin{itemize}
+    \item \textbf{Normalization of Amounts}: Converted fundraising amounts into numerical USD values using currency conversion rates from the \textit{CurrencyConverter} library.
+    \item \textbf{Deduplication}: Applied fuzzy string matching using Levenshtein Distance to identify and merge duplicate fundraising entities.
+    \item \textbf{Location Standardization}: Scraped addresses of fundraising businesses from online databases like \textit{Crunchbase} and \textit{CB Insights}. Used \textit{GeoPy} to standardize locations and obtain GPS coordinates.
+    \item \textbf{Feature Extraction}: Extracted telephone numbers and country codes from fundraiser descriptions.
+    \item \textbf{Geolocation Processing}: Determined country and continent information for each fundraiser using GPS coordinates and the \textit{pycountry} library.
+\end{itemize}
+
+Approximately 30 fundraiser records with amounts exceeding \$100 billion tied to large governmental initiatives were omitted to focus on private sector investments. Records related to fines or companies going out of business were also excluded. Manual review ensured location accuracy and correct sector classification, leveraging zero-shot text classification with \textit{facebook/bart-large-mnli}~\cite{lewis2020bart}.
+
+\subsection{Additional Data Sources}
+
+We enriched our dataset with macroeconomic, social, and environmental indicators from reputable sources:
+
+\begin{itemize}
+    \item \textbf{Macroeconomic Indicators}: GDP~\cite{WorldBankGDP2024}, GNI per Capita~\cite{OWIDGNI2022}.
+    \item \textbf{Social Indicators}: Happiness Score~\cite{OWIDHappiness2023}, Support for Climate Policies~\cite{OWIDClimatePolicies2024}, Belief in Climate Threat~\cite{OWIDClimateBeliefs2024}, Support for Public Action~\cite{OWIDPublicClimateAction2024}.
+    \item \textbf{Environmental Indicators}: Renewables Share~\cite{OWIDRenewableEnergy2023}, GHG Emissions per Capita~\cite{OWIDTotalGHGPerCapita2024}, Primary Energy Consumption~\cite{OWIDPrimaryEnergy2023}, Temperature Anomaly~\cite{OWIDTempAnomaly2024}.
+\end{itemize}
+
+\section{Exploratory Data Analysis}
+
+\subsection{Dataset Statistics}
+
+To provide an overview of the fundraisers dataset, we present key statistical measures (Table~\ref{tab:fundraisers_summary}).
+
+\begin{table}[htpb]
+    \centering
+    \caption{Summary Statistics of Fundraisers Dataset}
+    \label{tab:fundraisers_summary}
+    \begin{tabular}{lcc}
+        \toprule
+        Statistic & Amount Raised (USD) \\
+        \midrule
+        Number of Records & 3,348 \\
+        Mean & \$105,196,754 \\
+        Median & \$10,000,000 \\
+        Standard Deviation & \$1,038,774,190 \\
+        Minimum & \$20,000 \\
+        Maximum & \$60,000,000,000 \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\subsection{Correlation Analysis}
+
+We computed the correlation matrix for key numerical variables to identify significant relationships (Figure~\ref{fig:correlation_matrix}). 
+
+\begin{figure}[htpb]
+    \centering
+    \includegraphics[width=\linewidth]{visualizations/correlation_matrix.png}
+    \Description{Correlation matrix showing the relationships between various economic, social, and environmental indicators related to clean technology investments.}
+    \caption{Correlation Matrix of Key Numerical Variables}
+    \label{fig:correlation_matrix}
+\end{figure}
+
+\textbf{Observations}:
+
+\begin{itemize}
+    \item \textbf{Log Amount Raised} is positively correlated with \textbf{GDP} (0.51) and \textbf{Primary Energy Consumption} (0.44), suggesting that larger economies with higher energy consumption attract more investment.
+    \item \textbf{GNI per Capita} shows a high correlation with \textbf{Happiness Score} (0.84), indicating that wealthier countries report higher happiness levels.
+    \item \textbf{GDP} has a strong correlation with \textbf{Primary Energy Consumption} (0.88), implying that economic activity is closely tied to energy use.
+    \item \textbf{Support Climate Policies} is negatively correlated with \textbf{Primary Energy Consumption} (-0.67) and \textbf{GNI per Capita} (-0.59), suggesting that higher-income countries with high energy consumption may show less support for climate policies.
+\end{itemize}
+
+\textbf{Interpretation}:
+
+These correlations highlight the complex interplay between economic factors, public opinion, and investment in clean technology. The findings suggest that while wealthier countries consume more energy and attract more investment, they may also exhibit less public support for climate policies, underscoring the need for targeted awareness and policy interventions.
+
+\textbf{Interpretation}:
+
+These correlations highlight the complex interplay between economic factors, public opinion, and investment in clean technology. The negative correlation between \textbf{Support Climate Policies} and \textbf{GNI per Capita} suggests that higher-income countries may exhibit less public support for climate policies. However, wealthier countries consume more energy and attract more investment. This counterintuitive result may be influenced by various socio-economic factors and warrants further investigation to understand underlying causes.
+
+\subsection{Funding Distribution by Clean Technology Sector}
+
+We analyzed total funds raised across clean technology sectors to identify areas with high investment and those with potential for growth (Figure~\ref{fig:sector_funds_raised}).
+
+\begin{figure}[htpb]
+    \centering
+    \includegraphics[width=\linewidth]{visualizations/clean_tech_sector_funds_raised_bar_plot.png}
+    \Description{Bar chart showing total funds raised by each clean technology sector.}
+    \caption{Funding Distribution by Clean Technology Sector}
+    \label{fig:sector_funds_raised}
+\end{figure}
+
+\textbf{Key Insights}:
+
+\textbf{Key Insights}:
+
+\begin{itemize}
+    \item \textbf{Top-Funded Sectors}: Energy and Grid (\$309.8B) and Transportation and Mobility (\$338.6B) lead in funding, reflecting their high impact potential.
+    \item \textbf{Mid-Funded Sectors}: Sectors such as Food and Agriculture (\$31.1B) and Manufacturing and Built Infrastructure (\$27.9B) have substantial but lower funding.
+    \item \textbf{Lower-Funded Sectors}: Water Management and Marine Technologies (\$2.39B), Biodiversity Conservation (\$1.56B), and Air Quality and Environmental Monitoring (\$0.87B) received limited funding, suggesting these areas may be overlooked despite their importance to sustainability.
+\end{itemize}
+
+\textbf{Interpretation}:
+
+The funding distribution highlights investor priorities in sectors with immediate, large-scale impact, while some critical areas—such as Water Management and Biodiversity Conservation—remain underfunded. These gaps suggest opportunities for targeted investment in less saturated but environmentally significant sectors.
+
+The bar plot uses a \textbf{logarithmic scale} to clearly show disparities across sectors, emphasizing the concentration of funding in high-impact areas. This insight can inform the recommender system by identifying underfunded sectors with potential for impactful investment.
+
+\subsection{Distribution of Temperature Anomalies}
+
+We examined the distribution of temperature anomalies across countries (Figure~\ref{fig:temp_anomalies}).
+
+\begin{figure}[htpb]
+    \centering
+    \includegraphics[width=\linewidth]{visualizations/dist_temp_anomalies.png}
+    \Description{Histogram showing the distribution of temperature anomalies across different countries, indicating how frequently certain temperature deviations from the norm occur.}
+    \caption{Distribution of Temperature Anomalies}
+    \label{fig:temp_anomalies}
+\end{figure}
+
+\textbf{Observations}:
+
+\begin{itemize}
+    \item The distribution peaks around 0.3°C and 0.7°C, indicating that most countries experience moderate temperature anomalies.
+    \item The distribution is right-skewed with a long tail towards higher anomalies, signifying fewer countries facing extreme anomalies above 1.0°C.
+\end{itemize}
+
+\textbf{Interpretation}:
+
+The prevalence of moderate anomalies suggests that climate change impacts are widespread but vary in intensity. Regions with higher anomalies might be priority targets for investment to mitigate severe climate effects.
+
+\subsection{Investment vs. Temperature Anomalies}
+
+We analyzed the relationship between the amount raised and temperature anomalies (Figure~\ref{fig:amount_vs_temp}).
+
+\begin{figure}[htpb]
+    \centering
+    \includegraphics[width=\linewidth]{visualizations/amount_raised_vs_temperature_anomaly.png}
+    \Description{Scatter plot showing the relationship between the amount raised for investments and temperature anomalies by region, highlighting any correlations.}
+    \caption{Amount Raised vs. Temperature Anomalies}
+    \label{fig:amount_vs_temp}
+\end{figure}
+
+\textbf{Observations}:
+
+\begin{itemize}
+    \item No strong correlation between the amount raised and temperature anomalies.
+    \item Investments are spread across regions with varying temperature anomalies.
+\end{itemize}
+
+\textbf{Interpretation}:
+
+The lack of correlation between investment amounts and temperature anomalies suggests that current investment patterns are not directly aligned with the severity of climate impacts in different regions. This presents an opportunity for investors and policymakers to realign funding strategies to target areas where investments can have the most significant environmental impact.
+
+\section{Methodology}
+
+\subsection{Predictive Task Definition}
+
+The primary predictive task is to develop a recommender system that advises investors on:
+
+\begin{itemize}
+    \item Which clean technology sectors to invest in.
+    \item Where (geographically) to invest.
+    \item How much to invest.
+    \item When to invest.
+\end{itemize}
+
+The goal is to maximize impact on climate change mitigation and societal well-being.
+
+\subsection{Implementation Details}
+
+\subsubsection{Model Implementation}
+
+To address the predictive tasks, we implemented a combination of machine learning techniques tailored to our objectives.
+
+\paragraph{Text Embedding of Fundraiser Descriptions}
+
+We utilized Sentence Transformers \cite{reimers-2019-sentence-bert} to generate embeddings for fundraiser descriptions. Specifically, the \textit{all-MiniLM-L6-v2} model was chosen for its balance between performance and computational efficiency. This allowed us to capture semantic similarities between fundraisers effectively.
+
+\paragraph{Feature Engineering}
+
+Additional features were engineered based on the correlation analysis and domain knowledge:
+
+\begin{itemize}
+    \item \textbf{Lag Features}: Created lagged variables (e.g., \textit{lag\_1\_amount}, \textit{lag\_3\_amount}) to capture temporal dependencies in fundraising amounts.
+    \item \textbf{Moving Averages}: Computed moving averages (e.g., \textit{ma\_3}\linebreak\textit{\_amount}) to smooth out short-term fluctuations.
+    \item \textbf{Interaction Terms}: Generated interaction terms between macroeconomic indicators (e.g., \textit{gni\_renewables\_interaction}) to model complex relationships.
+\end{itemize}
+
+\subsubsection{Similarity Computation}
+
+To recommend similar fundraisers, we compute a combined similarity score that integrates textual, sectoral, and country-level similarities. The computation involves the following steps:
+
+\paragraph{Description Similarity}
+
+We obtain description embeddings $\mathbf{e}_i$ for each fundraiser $i$ using the Sentence Transformer model \textit{all-MiniLM-L6-v2}. The description similarity between two fundraisers $i$ and $j$ is calculated using cosine similarity:
+
+\[
+S_{\text{desc}}(i, j) = \cos(\mathbf{e}_i, \mathbf{e}_j) = \frac{\mathbf{e}_i \cdot \mathbf{e}_j}{\|\mathbf{e}_i\| \|\mathbf{e}_j\|}
+\]
+
+\paragraph{Sector Similarity}
+
+We represent each clean technology sector with feature vectors derived from sector-level indicators such as emissions and funding data. The sector similarity is computed as:
+
+\[
+S_{\text{sector}}(i, j) = \cos(\mathbf{s}_i, \mathbf{s}_j)
+\]
+
+where $\mathbf{s}_i$ is the sector feature vector for fundraiser $i$.
+
+\paragraph{Country Similarity}
+
+Country similarity is based on macroeconomic and environmental indicators aggregated at the country level. We compute the similarity between countries using:
+
+\[
+S_{\text{country}}(i, j) = \cos(\mathbf{c}_i, \mathbf{c}_j)
+\]
+
+where $\mathbf{c}_i$ is the country feature vector for fundraiser $i$.
+
+\paragraph{Combined Similarity Score}
+
+The overall similarity score between fundraisers $i$ and $j$ is a weighted sum of the individual similarities:
+
+\[
+S_{\text{combined}}(i, j) = \alpha \cdot S_{\text{desc}}(i, j) + \beta \cdot S_{\text{sector}}(i, j) + \gamma \cdot S_{\text{country}}(i, j)
+\]
+
+where the weights are set to $\alpha = 0.5$, $\beta = 0.3$, and $\gamma = 0.2$, ensuring $\alpha + \beta + \gamma = 1$. These weights prioritize textual content while still considering sectoral and geographical factors.
+
+\paragraph{Recommendation Generation}
+
+For a given fundraiser, we compute $S_{\text{combined}}$ with all other fundraisers and rank them in descending order to generate recommendations. This method allows us to recommend fundraisers that are similar in content, operate in related sectors, and are situated in economically or environmentally comparable countries.
+
+\paragraph{Regression Models}
+
+For predicting investment amounts and timing, we employed both Prophet \cite{taylor2018forecasting} and LightGBM \cite{ke2017lightgbm}. Prophet was utilized for time-series forecasting to model temporal trends and seasonality in investment amounts. However, to capture complex nonlinear relationships and interactions in the data, we integrated LightGBM, a gradient boosting framework known for its efficiency and accuracy with large datasets.
+
+\subparagraph{LightGBM Implementation}
+We prepared the data by sorting fundraisers by country, clean technology sector, and date. Lag features such as \textit{lag\_1\_amount}, \textit{lag\_3\_amount}, and moving averages like \textit{ma\_3\_amount} were created to capture temporal dependencies. These features were included in the model along with macroeconomic and environmental indicators.
+
+The LightGBM regressor was configured with a learning rate of 0.01 and 1000 estimators to ensure gradual learning and sufficient model capacity, while setting the number of leaves to 31 and subsample ratio to 0.8 to balance complexity and prevent overfitting.
+
+\subparagraph{Feature Importance}
+
+After training the LightGBM model, we analyzed feature importances to understand the factors influencing investment amounts. The model provided insights into which features were most predictive, aiding in interpreting the results and refining the model.
+
+\section{Results}
+
+\subsection{Evaluation Results}
+
+\subsubsection{Similar Fundraiser Recommendation}
+
+The recommender system was evaluated on the test set, yielding the following metrics:
+
+\begin{table}[htpb]
+    \centering
+    \caption{Evaluation Metrics for Similar Fundraiser Recommendations}
+    \label{tab:evaluation_metrics}
+    \begin{tabular}{lcccc}
+        \toprule
+        \textbf{Metric} & \textbf{Precision@5} & \textbf{Recall@5} & \textbf{NDCG@5} & \textbf{MRR@5} \\
+        \midrule
+        \textbf{Value} & 0.0231 & 0.0019 & 0.0234 & 0.0498 \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\textbf{Interpretation}:
+
+The evaluation metrics indicate that while the precision and recall are low due to dataset sparsity and the novelty of fundraisers (cold-start problem), the NDCG and MRR values suggest that relevant fundraisers, when recommended, are ranked higher. This reflects the model's ability to prioritize more relevant recommendations effectively.
+
+\subsection{Case Study: Samsara Eco Recommendation}
+
+To demonstrate the effectiveness of our recommendation system, we present an example where we generate recommendations for the fundraising entity \textit{Samsara Eco}, an Australia-based recycling company utilizing enzyme-based technology to break down plastic.
+
+\begin{table}[htpb]
+    \centering
+    \caption{Top 4 Recommendations for \textit{Samsara Eco}}
+    \label{tab:recommendations_example}
+    \begin{tabular}{llcc}
+        \toprule
+        \textbf{Rank} & \textbf{Fundraising Entity} & \textbf{Country} & \textbf{Similarity Score} \\
+        \midrule
+        1 & Protein Evolution & USA & 0.8549 \\
+        2 & Epoch Biodesign & UK & 0.8355 \\
+        3 & Impact Recycling & UK & 0.8316 \\
+        4 & Umincorp & Netherlands & 0.8233 \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\textbf{Interpretation}:
+
+The recommendations primarily consist of companies involved in waste management and recycling, aligning with \textit{Samsara Eco}'s sector. The top recommendation, \textit{Protein Evolution}, is a US-based recycling company using enzyme-based technology, indicating high textual and sectoral similarity.
+
+This example showcases the system's ability to identify fundraisers with similar technologies and objectives, even across different countries, highlighting the model's effectiveness in capturing nuanced similarities.
+
+\subsubsection{Investment Timing and Amount Prediction}
+
+For time-series forecasting, the models achieved the following:
+
+\begin{table}[htpb]
+    \centering
+    \caption{Forecast Evaluation Metrics}
+    \label{tab:forecast_metrics}
+    \begin{tabular}{lcc}
+        \toprule
+        Metric & Log Scale & Original Scale \\
+        \midrule
+        RMSE & 2.4843 & \$11,867,685,005.33 \\
+        MAE & 2.0734 & \$4,276,705,464.96 \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\textbf{Interpretation}:
+
+The RMSE and MAE on the log scale indicate reasonable predictive accuracy considering the variability in the data. On the original scale, the large RMSE reflects the wide range of investment amounts, highlighting the challenges in predicting high-magnitude financial data.
+
+\paragraph{Top Investment Timing and Amount Recommendations}
+
+Using the trained LightGBM model, we forecasted future investment amounts for the \textit{Energy and Grid} sector in the \textit{United States of America} over the next three years. The top investment timing recommendations are presented in Table~\ref{tab:investment_recommendations}.
+
+\begin{table}[htpb]
+    \centering
+    \caption{Top Investment Timing and Amount Recommendations}
+    \label{tab:investment_recommendations}
+    \begin{tabular}{lcc}
+        \toprule
+        \textbf{Date} & \textbf{Predicted Amount (USD)} & \textbf{Rank} \\
+        \midrule
+        December 31, 2026 & \$959,993,500 & 1 \\
+        December 31, 2025 & \$800,031,400 & 2 \\
+        December 31, 2024 & \$666,681,400 & 3 \\
+        November 30, 2026 & \$606,418,000 & 4 \\
+        September 30, 2026 & \$510,759,300 & 5 \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\textbf{Interpretation}:
+
+The model forecasts increasing investment amounts in the \textit{Energy and Grid} sector, with the highest predicted amount in December 2026. This trend aligns with the growing emphasis on renewable energy and infrastructure development in the United States. Notably, the top investment recommendations are concentrated in the fourth quarter (Q4) of each year, suggesting a potential seasonal or cyclical pattern where investments peak toward the calendar year-end. This pattern may reflect budget cycles, strategic planning processes, or an annual increase in funding demand in anticipation of new fiscal initiatives.
+
+\paragraph{Visualization}
+
+We visualized the forecasting results using Prophet and LightGBM (Figure~\ref{fig:forecast_plot}).
+
+\begin{figure}[htpb]
+    \centering
+    \includegraphics[width=\linewidth]{visualizations/lightgbm_forecast_plot.png}
+    \Description{Plot showing the historical and forecasted investment amounts in the Energy and Grid sector in the USA, with the LightGBM regression fit overlaid.}
+    \caption{Energy and Grid Sector Investment Amount Forecasting Using Prophet and LightGBM}
+    \label{fig:forecast_plot}
+\end{figure}
+
+\textbf{Interpretation}:
+
+The plot illustrates the model's fit to historical data and its predictions for future investment amounts. The upward trend in the forecast aligns with expectations given the increasing focus on clean energy. The LightGBM regression fit closely follows the historical data points, demonstrating the model's effectiveness in capturing temporal patterns.
+
+\subsection{Statistical Significance Testing}
+
+We conducted a paired t-test to compare our model's performance against a baseline model using the errors on the original scale for fundraiser amounts. The baseline model predicts investment amounts using a simple historical average of past investments.
+
+The null hypothesis ($H_0$) is that there is no significant difference between our model and the baseline model. The alternative hypothesis ($H_1$) is that our model performs significantly better than the baseline.
+
+\begin{table}[htpb]
+    \centering
+    \caption{Paired T-test Results}
+    \label{tab:t_test_results}
+    \begin{tabular}{lcc}
+        \toprule
+        & \textbf{T-statistic} & \textbf{P-value} \\
+        \midrule
+        Original Scale & 2.1460 & 0.0393 \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\textbf{Interpretation}:
+
+With a t-statistic of 2.1460 and a p-value of 0.0393, we reject the null hypothesis at the 5\% significance level. This indicates that our model performs significantly better than the baseline model, providing valuable predictive insights for investment timing and amounts in the clean technology sector.
+
+\subsection{Sector-Specific Time-Series Analysis}
+
+We analyzed investment trends across different clean technology sectors (Figures~\ref{fig:sector_timeseries1} and~\ref{fig:sector_timeseries2}).
+
+\begin{figure*}[htpb]
+    \centering
+    \begin{subfigure}[t]{0.32\textwidth}
+        \includegraphics[height=4cm]{visualizations/energy_and_grid_timeseries.png}
+        \Description{Time-series plot showing investment amounts over time in the Energy and Grid sector, indicating trends and fluctuations.}
+        \caption{Energy and Grid}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[t]{0.32\textwidth}
+        \includegraphics[height=4cm]{visualizations/transportation_and_mobility_timeseries.png}
+        \Description{Time-series plot showing investment amounts over time in the Transportation and Mobility sector, showing investment patterns over time.}
+        \caption{Transportation and Mobility}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[t]{0.32\textwidth}
+        \includegraphics[height=4cm]{visualizations/carbon_technology_timeseries.png}
+        \Description{Time-series plot depicting investment trends over time in the Carbon Technology sector, highlighting growth or declines in funding.}
+        \caption{Carbon Technology}
+    \end{subfigure}
+    \caption{Time-Series of Investment Amounts by Sector (Part 1)}
+    \label{fig:sector_timeseries1}
+\end{figure*}
+
+\begin{figure*}[htpb]
+    \centering
+    \begin{subfigure}[t]{0.32\textwidth}
+        \includegraphics[height=4cm]{visualizations/food_and_agriculture_timeseries.png}
+        \Description{Time-series plot illustrating investment trends in the Food and Agriculture sector over time, showing fluctuations in funding levels.}
+        \caption{Food and Agriculture}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[t]{0.32\textwidth}
+        \includegraphics[height=4cm]{visualizations/waste_management_and_recycling_timeseries.png}
+        \Description{Time-series plot indicating the trend of investments in Waste Management and Recycling over time, revealing patterns of interest in the sector.}
+        \caption{Waste Management and Recycling}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[t]{0.32\textwidth}
+        \includegraphics[height=4cm]{visualizations/water_management_and_marine_technologies_timeseries.png}
+        \Description{Time-series plot showing investment amounts in Water Management and Marine Technologies over time, capturing investment interest in this sector.}
+        \caption{Water Management and Marine Technologies}
+    \end{subfigure}
+    \caption{Time-Series of Investment Amounts by Sector (Part 2)}
+    \label{fig:sector_timeseries2}
+\end{figure*}
+
+\textbf{Observations}:
+
+\begin{itemize}
+    \item \textbf{Energy and Grid} and \textbf{Transportation and Mobility} sectors exhibit stable funding trends with high investment amounts.
+    \item \textbf{Carbon Technology} shows a gradual upward trend, indicating growing interest.
+    \item Sectors like \textbf{Water Management} and \textbf{Biodiversity Conservation} have lower funding levels but show potential for growth.
+\end{itemize}
+
+\textbf{Interpretation}:
+
+The stable funding in mature sectors suggests market saturation, whereas emerging sectors with upward trends may offer high-impact investment opportunities.
+
+\subsection{Funding Allocation vs. Emissions Impact}
+
+Our analysis revealed a misalignment between funding allocation and greenhouse gas emissions by sector (Figure~\ref{fig:emissions_vs_funding}).
+
+\begin{figure}[htpb]
+    \centering
+    \includegraphics[width=\linewidth]{visualizations/emissions_vs_funding_by_sector.png}
+    \Description{Bar chart comparing greenhouse gas emissions by clean technology sector with the corresponding funding allocation, highlighting underfunded sectors.}
+    \caption{Comparison of GHG Emissions and Funding by Clean Technology Sector}
+    \label{fig:emissions_vs_funding}
+\end{figure}
+
+\textbf{Observations}:
+
+\begin{itemize}
+    \item \textbf{Energy and Grid} and \textbf{Transportation and Mobility} sectors receive substantial funding, aligning with their high emissions.
+    \item Sectors like \textbf{Manufacturing and Built Infrastructure} (Emissions: 37.4 Gt CO\textsubscript{2}e; Funding: \$27.9B) and \textbf{Food and Agriculture} (Emissions: 23.8 Gt CO\textsubscript{2}e; Funding: \$31.1B) have high emissions but relatively lower funding.
+    \item \textbf{Biodiversity Conservation} (Emissions: 5.4 Gt CO\textsubscript{2}e; Funding: \$1.56B) is significantly underfunded despite its environmental importance.
+\end{itemize}
+
+\textbf{Interpretation}:
+
+There is potential for impactful investment in underfunded sectors with high emissions, such as \textbf{Manufacturing and Built Infrastructure} and \textbf{Food and Agriculture}. Redirecting funds to these areas could enhance overall climate change mitigation efforts. Investors may consider these sectors as opportunities for high environmental impact and potentially untapped financial returns.
+
+\subsection{Global Investment Distribution}
+
+We analyzed the global distribution of fundraisers and total amounts raised by continent (Figure~\ref{fig:fundraisers_bar}).
+
+\begin{figure}[htpb]
+    \centering
+    \includegraphics[width=\linewidth]{visualizations/fundraisers_bar_plot.png}
+    \Description{Bar chart showing the number of fundraisers and total amount raised by continent, illustrating regional differences in clean technology investment.}
+    \caption{Number of Fundraisers and Total Amount Raised by Continent}
+    \label{fig:fundraisers_bar}
+\end{figure}
+
+\textbf{Observations}:
+
+\begin{itemize}
+    \item \textbf{North America} leads in both the number of fundraisers and total funding.
+    \item \textbf{Europe} follows, with significant but lower figures.
+    \item \textbf{Asia} shows moderate activity, indicating potential growth opportunities.
+    \item \textbf{Africa} and \textbf{South America} have minimal fundraising activity, highlighting underserved regions.
+\end{itemize}
+
+\textbf{Interpretation}:
+
+Investment is concentrated in developed regions, suggesting a need to encourage funding in emerging markets, which may offer high-impact opportunities due to less competition and significant environmental challenges.
+
+\section{Code and Data Availability}
+
+The source code for this research project is available on GitHub at \url{https://github.com/ChestnutKurisu/CSE258_A2_FA24}. The climate tech fundraiser dataset used in this study can be accessed on HuggingFace at \url{https://huggingface.co/datasets/Xcissa/climate-codex}.
+
+\section{Conclusion}
+
+This study presents a recommender system that integrates diverse data sources and advanced modeling techniques to advise investors on clean technology investments, aiming to maximize impact on climate change mitigation and societal well-being. Our analysis highlights misalignments between current investment patterns and areas of greatest environmental need, particularly in underfunded sectors with high emissions such as \textbf{Manufacturing and Built Infrastructure} and \textbf{Food and Agriculture}.
+
+The evaluation results demonstrate the system's capability to provide meaningful recommendations despite challenges like data sparsity. The statistically significant improvement over baseline models in investment forecasting underscores the practical utility of our approach.
+
+Future work includes enhancing the models with more granular data, incorporating real-time indicators, and exploring policy frameworks to better align investment strategies with global climate goals. Additionally, expanding the system to consider the socio-economic context of underrepresented regions could further optimize the impact of clean technology investments.
+
+\bibliographystyle{ACM-Reference-Format}
+\bibliography{sample-base}
+
+\appendix
+
+\section{Additional Visualizations}
+
+\subsection{Geographical Distribution of Fundraisers}
+
+Due to their size, the geographical plots are included in the appendix.
+
+\begin{figure*}[htpb]
+    \centering
+    \includegraphics[width=0.9\linewidth]{visualizations/geog_dist_fundraisers_clean_tech_sector.png}
+    \Description{Map of global fundraiser distribution by clean technology sector, highlighting geographic concentration of fundraisers.}
+    \caption{Global Distribution of Fundraisers by Clean Technology Sector}
+    \label{fig:global_distribution}
+\end{figure*}
+
+\textbf{Observations}:
+
+\begin{itemize}
+    \item High concentration of fundraisers in \textbf{North America} and \textbf{Europe}, especially in \textbf{Energy and Grid} and \textbf{Transportation and Mobility}.
+    \item Sparse activity in \textbf{Africa}, \textbf{South America}, and parts of \textbf{Asia}, indicating potential for growth.
+    \item Sector diversity is greater in developed regions, suggesting mature investment ecosystems.
+\end{itemize}
+
+\subsection{Geographical Distribution in the USA}
+
+\begin{figure*}[htpb]
+    \centering
+    \includegraphics[width=0.9\linewidth]{visualizations/geog_dist_fundraisers_clean_tech_sector_usa.png}
+    \Description{Map showing the distribution of fundraisers by clean technology sector across the USA, emphasizing regional activity in clean technology.}
+    \caption{Distribution of Fundraisers in the USA by Clean Technology Sector}
+    \label{fig:usa_distribution}
+\end{figure*}
+
+\textbf{Observations}:
+
+\begin{itemize}
+    \item Significant fundraising activity in \textbf{California} and the \textbf{Northeastern U.S.} across multiple sectors.
+    \item \textbf{Texas} and the \textbf{Midwest} also show notable activity, primarily in \textbf{Energy} and \textbf{Manufacturing}.
+    \item Low activity regions may represent untapped markets for investors.
+\end{itemize}
+
+\end{document}
