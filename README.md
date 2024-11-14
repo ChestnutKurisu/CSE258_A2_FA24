@@ -203,7 +203,7 @@ If you plan to use the GPT-4 data extraction code, set up your OpenAI API key:
 ## Project Structure
 
 ```
-climate-investment-recommender/
+CSE258_A2_FA24/
 ├── data/
 │   ├── climate-tech-fundraisers-keep-cool-ctvc-01-25-2024.parquet
 │   ├── gross-national-income-per-capita-undp.csv
