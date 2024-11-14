@@ -177,19 +177,12 @@ We computed the correlation matrix for key numerical variables to identify signi
 \textbf{Observations}:
 
 \begin{itemize}
-    \item \textbf{Log Amount Raised} is positively correlated with \textbf{GDP} (0.51) and \textbf{Primary Energy Consumption} (0.44), suggesting that larger economies with higher energy consumption attract more investment.
-    \item \textbf{GNI per Capita} shows a high correlation with \textbf{Happiness Score} (0.84), indicating that wealthier countries report higher happiness levels.
-    \item \textbf{GDP} has a strong correlation with \textbf{Primary Energy Consumption} (0.88), implying that economic activity is closely tied to energy use.
-    \item \textbf{Support Climate Policies} is negatively correlated with \textbf{Primary Energy Consumption} (-0.67) and \textbf{GNI per Capita} (-0.59), suggesting that higher-income countries with high energy consumption may show less support for climate policies.
+    \item \textbf{Log Amount Raised} is positively correlated with \textbf{GDP} and \textbf{Primary Energy Consumption}, suggesting that larger economies with higher energy consumption attract more investment in clean technology.
+    \item \textbf{GNI per Capita} has a strong positive correlation with \textbf{Happiness Score}, indicating that wealthier countries tend to report higher happiness levels.
+    \item \textbf{Support for Climate Policies} is negatively correlated with \textbf{GNI per Capita} and \textbf{Temperature Anomaly}, suggesting that higher-income countries and those experiencing greater temperature anomalies may show less public support for climate policies.
 \end{itemize}
 
-\textbf{Interpretation}:
-
-These correlations highlight the complex interplay between economic factors, public opinion, and investment in clean technology. The findings suggest that while wealthier countries consume more energy and attract more investment, they may also exhibit less public support for climate policies, underscoring the need for targeted awareness and policy interventions.
-
-\textbf{Interpretation}:
-
-These correlations highlight the complex interplay between economic factors, public opinion, and investment in clean technology. The negative correlation between \textbf{Support Climate Policies} and \textbf{GNI per Capita} suggests that higher-income countries may exhibit less public support for climate policies. However, wealthier countries consume more energy and attract more investment. This counterintuitive result may be influenced by various socio-economic factors and warrants further investigation to understand underlying causes.
+\textbf{Interpretation}: These correlations highlight the complex interplay between economic factors, public opinion, and investment in clean technology. The positive correlation between investment amounts and both \textbf{GDP} and \textbf{Primary Energy Consumption} suggests that larger economies with higher energy needs are attracting more investment, potentially due to greater resources and market opportunities. However, the negative correlation between \textbf{Support for Climate Policies} and both \textbf{GNI per Capita} and \textbf{Temperature Anomaly} indicates that wealthier countries and those experiencing greater climate impacts may exhibit less public support for climate initiatives. This counterintuitive finding may be influenced by factors such as a perceived ability to adapt, differing media narratives, or political influences, and warrants further investigation.
 
 \subsection{Funding Distribution by Clean Technology Sector}
 
@@ -205,17 +198,13 @@ We analyzed total funds raised across clean technology sectors to identify areas
 
 \textbf{Key Insights}:
 
-\textbf{Key Insights}:
-
 \begin{itemize}
     \item \textbf{Top-Funded Sectors}: Energy and Grid (\$309.8B) and Transportation and Mobility (\$338.6B) lead in funding, reflecting their high impact potential.
     \item \textbf{Mid-Funded Sectors}: Sectors such as Food and Agriculture (\$31.1B) and Manufacturing and Built Infrastructure (\$27.9B) have substantial but lower funding.
     \item \textbf{Lower-Funded Sectors}: Water Management and Marine Technologies (\$2.39B), Biodiversity Conservation (\$1.56B), and Air Quality and Environmental Monitoring (\$0.87B) received limited funding, suggesting these areas may be overlooked despite their importance to sustainability.
 \end{itemize}
 
-\textbf{Interpretation}:
-
-The funding distribution highlights investor priorities in sectors with immediate, large-scale impact, while some critical areas—such as Water Management and Biodiversity Conservation—remain underfunded. These gaps suggest opportunities for targeted investment in less saturated but environmentally significant sectors.
+\textbf{Interpretation}: The funding distribution highlights investor priorities in sectors with immediate, large-scale impact, while some critical areas—such as Water Management and Biodiversity Conservation—remain underfunded. These gaps suggest opportunities for targeted investment in less saturated but environmentally significant sectors.
 
 The bar plot uses a \textbf{logarithmic scale} to clearly show disparities across sectors, emphasizing the concentration of funding in high-impact areas. This insight can inform the recommender system by identifying underfunded sectors with potential for impactful investment.
 
@@ -238,9 +227,7 @@ We examined the distribution of temperature anomalies across countries (Figure~\
     \item The distribution is right-skewed with a long tail towards higher anomalies, signifying fewer countries facing extreme anomalies above 1.0°C.
 \end{itemize}
 
-\textbf{Interpretation}:
-
-The prevalence of moderate anomalies suggests that climate change impacts are widespread but vary in intensity. Regions with higher anomalies might be priority targets for investment to mitigate severe climate effects.
+\textbf{Interpretation}: The prevalence of moderate anomalies suggests that climate change impacts are widespread but vary in intensity. Regions with higher anomalies might be priority targets for investment to mitigate severe climate effects.
 
 \subsection{Investment vs. Temperature Anomalies}
 
@@ -261,9 +248,7 @@ We analyzed the relationship between the amount raised and temperature anomalies
     \item Investments are spread across regions with varying temperature anomalies.
 \end{itemize}
 
-\textbf{Interpretation}:
-
-The lack of correlation between investment amounts and temperature anomalies suggests that current investment patterns are not directly aligned with the severity of climate impacts in different regions. This presents an opportunity for investors and policymakers to realign funding strategies to target areas where investments can have the most significant environmental impact.
+\textbf{Interpretation}: The lack of correlation between investment amounts and temperature anomalies suggests that current investment patterns are not directly aligned with the severity of climate impacts in different regions. This presents an opportunity for investors and policymakers to realign funding strategies to target areas where investments can have the most significant environmental impact.
 
 \section{Methodology}
 
@@ -350,14 +335,85 @@ For a given fundraiser, we compute $S_{\text{combined}}$ with all other fundrais
 
 For predicting investment amounts and timing, we employed both Prophet \cite{taylor2018forecasting} and LightGBM \cite{ke2017lightgbm}. Prophet was utilized for time-series forecasting to model temporal trends and seasonality in investment amounts. However, to capture complex nonlinear relationships and interactions in the data, we integrated LightGBM, a gradient boosting framework known for its efficiency and accuracy with large datasets.
 
-\subparagraph{LightGBM Implementation}
-We prepared the data by sorting fundraisers by country, clean technology sector, and date. Lag features such as \textit{lag\_1\_amount}, \textit{lag\_3\_amount}, and moving averages like \textit{ma\_3\_amount} were created to capture temporal dependencies. These features were included in the model along with macroeconomic and environmental indicators.
+\paragraph{LightGBM Implementation}
 
-The LightGBM regressor was configured with a learning rate of 0.01 and 1000 estimators to ensure gradual learning and sufficient model capacity, while setting the number of leaves to 31 and subsample ratio to 0.8 to balance complexity and prevent overfitting.
+We prepared the data by sorting fundraisers by country, clean technology sector, and date. Lag features such as \textit{lag\_1\_amount}, \textit{lag\_3\_amount}, and moving averages like \textit{ma\_3\_amount} were created to capture temporal dependencies. These features were included in the model along with macroeconomic and environmental indicators. The LightGBM regressor was configured with a learning rate of 0.01 and 1000 estimators to ensure gradual learning and sufficient model capacity, while setting the number of leaves to 31 and subsample ratio to 0.8 to balance complexity and prevent overfitting.
 
-\subparagraph{Feature Importance}
+\paragraph{Feature Importance}
 
 After training the LightGBM model, we analyzed feature importances to understand the factors influencing investment amounts. The model provided insights into which features were most predictive, aiding in interpreting the results and refining the model.
+
+\subsection{Alternative Models and Justification}
+
+\subsubsection{Alternative Models Considered and Challenges Faced}
+
+Initially, we explored collaborative filtering methods such as Bayesian Personalized Ranking (BPR) and latent factor models like Singular Value Decomposition (SVD). These models are effective in traditional recommender systems where user-item interaction matrices are dense and user preferences can be inferred from historical behavior.
+
+However, our dataset presented unique challenges:
+
+\begin{itemize}
+    \item \textbf{Data Sparsity}: The interaction matrix between investors and fundraisers was extremely sparse, as there were only a few investing entities that had multiple fundraiser records in the dataset.
+    \item \textbf{Cold-Start Problem}: Many fundraisers and investors in the clean technology sector are new or have limited historical data, making it difficult for models like BPR and SVD to make accurate predictions.
+    \item \textbf{Lack of Explicit Feedback}: The absence of explicit user ratings or preferences hindered the applicability of latent factor models that require such feedback for training.
+\end{itemize}
+
+We also attempted to apply matrix factorization using investment amounts as implicit feedback. However, the models failed to converge to meaningful representations due to the sparsity of the data and the absence of repeated interactions. Popularity-based recommendation methods were considered but did not account for investor preferences or alignment with climate impact goals, leading to suboptimal recommendations.
+
+\subsubsection{Justification for Chosen Model}
+
+Given these challenges, we opted for a content-based approach that leverages the rich textual information available in fundraiser descriptions and integrates macroeconomic and environmental indicators. The use of Sentence Transformers for text embeddings allowed us to capture semantic similarities between fundraisers effectively. By combining description, sector, and country similarities, we tailored recommendations to align with investors' interests and climate impact objectives.
+
+\subsubsection{Optimization Strategies and Challenges}
+
+Processing text descriptions and computing similarity matrices posed computational challenges. We addressed this by utilizing efficient pre-trained models (\textit{all-MiniLM-L6-v2}) and leveraging GPU acceleration where available. To prevent overfitting in our regression models, we employed regularization techniques inherent in LightGBM, such as limiting the number of leaves to 31 and applying a subsampling coefficient of 0.8. The sparsity of time-series data for certain sectors and countries affected the forecasting models. We mitigated this by aggregating data at monthly intervals and using log transformations to stabilize variance.
+
+\mbox{}\\
+
+\subsubsection{Feature Representations}\mbox{}\\
+
+\textbf{Effective Features}:
+
+\begin{itemize}
+    \item \textbf{Lag Features and Moving Averages}: Captured temporal dependencies effectively.
+    \item \textbf{Macroeconomic Indicators}: Provided context on economic conditions influencing investments.
+    \item \textbf{Temperature Anomaly}: Included environmental impact considerations, aligning with climate investment goals.
+\end{itemize}
+
+\textbf{Ineffective Features}:
+
+\begin{itemize}
+    \item \textbf{Interaction Terms}: Some interaction terms did not significantly improve model performance, possibly due to multicollinearity or lack of complex nonlinear relationships captured by the model.
+\end{itemize}
+
+\subsubsection{Strengths and Weaknesses of the Models}
+
+\textbf{Strengths}:
+
+\begin{itemize}
+    \item \textbf{Content-Based Similarity}: Effectively handles new or unseen fundraisers by relying on their content, overcoming the cold-start problem.
+    \item \textbf{Integration of Multiple Similarities}: Combining textual, sectoral, and country-level similarities provides a holistic recommendation approach.
+    \item \textbf{LightGBM Regression}: Captures complex nonlinear relationships and interactions between features, improving forecasting accuracy.
+\end{itemize}
+
+\textbf{Weaknesses}:
+
+\begin{itemize}
+    \item \textbf{Lack of User Interaction Data}: Without explicit investor preferences or interaction history, personalization is limited.
+    \item \textbf{Computational Complexity}: Computing similarity matrices for large datasets can be resource-intensive.
+    \item \textbf{Limited Interpretability}: While LightGBM provides feature importances, the overall model can be seen as a black box, making it harder to interpret specific parameter effects.
+\end{itemize}
+
+\subsubsection{Investment Timing and Amount Prediction}
+
+In addition to Prophet and LightGBM, we evaluated simpler forecasting methods, such as using historical averages and naive forecasts based on the previous period's investment amounts.
+
+\paragraph{Baseline Model}
+
+The baseline model predicts future investment amounts using the mean of past investments. We compared our LightGBM model's performance against this baseline using paired t-tests.
+
+\paragraph{Evaluation Metrics and Statistical Significance}
+
+The paired t-test results on the original scale (Table~\ref{tab:t_test_results}) show a significant improvement of our model over the baseline with a p-value of 0.0393. However, on the log-transformed scale, the t-test yielded a t-statistic of 1.5314 and a p-value of 0.1352, indicating that the improvement was not statistically significant at the 5\% level. The lack of statistical significance on the log scale suggests that our model's performance is not substantially better than the baseline when considering relative changes in investment amounts. This could be due to the high variability and unpredictability inherent in investment data on a logarithmic scale.
 
 \section{Results}
 
@@ -380,9 +436,7 @@ The recommender system was evaluated on the test set, yielding the following met
     \end{tabular}
 \end{table}
 
-\textbf{Interpretation}:
-
-The evaluation metrics indicate that while the precision and recall are low due to dataset sparsity and the novelty of fundraisers (cold-start problem), the NDCG and MRR values suggest that relevant fundraisers, when recommended, are ranked higher. This reflects the model's ability to prioritize more relevant recommendations effectively.
+\textbf{Interpretation}: The evaluation metrics indicate that while the precision and recall are low due to dataset sparsity and the novelty of fundraisers (cold-start problem), the NDCG and MRR values suggest that relevant fundraisers, when recommended, are ranked higher. This reflects the model's ability to prioritize more relevant recommendations effectively.
 
 \subsection{Case Study: Samsara Eco Recommendation}
 
@@ -404,9 +458,7 @@ To demonstrate the effectiveness of our recommendation system, we present an exa
     \end{tabular}
 \end{table}
 
-\textbf{Interpretation}:
-
-The recommendations primarily consist of companies involved in waste management and recycling, aligning with \textit{Samsara Eco}'s sector. The top recommendation, \textit{Protein Evolution}, is a US-based recycling company using enzyme-based technology, indicating high textual and sectoral similarity.
+\textbf{Interpretation}: The recommendations primarily consist of companies involved in waste management and recycling, aligning with \textit{Samsara Eco}'s sector. The top recommendation, \textit{Protein Evolution}, is a US-based recycling company using enzyme-based technology, indicating high textual and sectoral similarity.
 
 This example showcases the system's ability to identify fundraisers with similar technologies and objectives, even across different countries, highlighting the model's effectiveness in capturing nuanced similarities.
 
@@ -428,9 +480,7 @@ For time-series forecasting, the models achieved the following:
     \end{tabular}
 \end{table}
 
-\textbf{Interpretation}:
-
-The RMSE and MAE on the log scale indicate reasonable predictive accuracy considering the variability in the data. On the original scale, the large RMSE reflects the wide range of investment amounts, highlighting the challenges in predicting high-magnitude financial data.
+\textbf{Interpretation}: The RMSE and MAE on the log scale indicate reasonable predictive accuracy considering the variability in the data. On the original scale, the large RMSE reflects the wide range of investment amounts, highlighting the challenges in predicting high-magnitude financial data.
 
 \paragraph{Top Investment Timing and Amount Recommendations}
 
@@ -453,9 +503,7 @@ Using the trained LightGBM model, we forecasted future investment amounts for th
     \end{tabular}
 \end{table}
 
-\textbf{Interpretation}:
-
-The model forecasts increasing investment amounts in the \textit{Energy and Grid} sector, with the highest predicted amount in December 2026. This trend aligns with the growing emphasis on renewable energy and infrastructure development in the United States. Notably, the top investment recommendations are concentrated in the fourth quarter (Q4) of each year, suggesting a potential seasonal or cyclical pattern where investments peak toward the calendar year-end. This pattern may reflect budget cycles, strategic planning processes, or an annual increase in funding demand in anticipation of new fiscal initiatives.
+\textbf{Interpretation}: The model forecasts increasing investment amounts in the \textit{Energy and Grid} sector, with the highest predicted amount in December 2026. This trend aligns with the growing emphasis on renewable energy and infrastructure development in the United States. Notably, the top investment recommendations are concentrated in the fourth quarter (Q4) of each year, suggesting a potential seasonal or cyclical pattern where investments peak toward the calendar year-end. This pattern may reflect budget cycles, strategic planning processes, or an annual increase in funding demand in anticipation of new fiscal initiatives.
 
 \paragraph{Visualization}
 
@@ -469,9 +517,7 @@ We visualized the forecasting results using Prophet and LightGBM (Figure~\ref{fi
     \label{fig:forecast_plot}
 \end{figure}
 
-\textbf{Interpretation}:
-
-The plot illustrates the model's fit to historical data and its predictions for future investment amounts. The upward trend in the forecast aligns with expectations given the increasing focus on clean energy. The LightGBM regression fit closely follows the historical data points, demonstrating the model's effectiveness in capturing temporal patterns.
+\textbf{Interpretation}: The plot illustrates the model's fit to historical data and its predictions for future investment amounts. The upward trend in the forecast aligns with expectations given the increasing focus on clean energy. The LightGBM regression fit closely follows the historical data points, demonstrating the model's effectiveness in capturing temporal patterns.
 
 \subsection{Statistical Significance Testing}
 
@@ -492,9 +538,7 @@ The null hypothesis ($H_0$) is that there is no significant difference between o
     \end{tabular}
 \end{table}
 
-\textbf{Interpretation}:
-
-With a t-statistic of 2.1460 and a p-value of 0.0393, we reject the null hypothesis at the 5\% significance level. This indicates that our model performs significantly better than the baseline model, providing valuable predictive insights for investment timing and amounts in the clean technology sector.
+\textbf{Interpretation}: With a t-statistic of 2.1460 and a p-value of 0.0393, we reject the null hypothesis at the 5\% significance level. This indicates that our model performs significantly better than the baseline model, providing valuable predictive insights for investment timing and amounts in the clean technology sector.
 
 \subsection{Sector-Specific Time-Series Analysis}
 
@@ -554,9 +598,7 @@ We analyzed investment trends across different clean technology sectors (Figures
     \item Sectors like \textbf{Water Management} and \textbf{Biodiversity Conservation} have lower funding levels but show potential for growth.
 \end{itemize}
 
-\textbf{Interpretation}:
-
-The stable funding in mature sectors suggests market saturation, whereas emerging sectors with upward trends may offer high-impact investment opportunities.
+\textbf{Interpretation}: The stable funding in mature sectors suggests market saturation, whereas emerging sectors with upward trends may offer high-impact investment opportunities.
 
 \subsection{Funding Allocation vs. Emissions Impact}
 
@@ -578,9 +620,7 @@ Our analysis revealed a misalignment between funding allocation and greenhouse g
     \item \textbf{Biodiversity Conservation} (Emissions: 5.4 Gt CO\textsubscript{2}e; Funding: \$1.56B) is significantly underfunded despite its environmental importance.
 \end{itemize}
 
-\textbf{Interpretation}:
-
-There is potential for impactful investment in underfunded sectors with high emissions, such as \textbf{Manufacturing and Built Infrastructure} and \textbf{Food and Agriculture}. Redirecting funds to these areas could enhance overall climate change mitigation efforts. Investors may consider these sectors as opportunities for high environmental impact and potentially untapped financial returns.
+\textbf{Interpretation}: There is potential for impactful investment in underfunded sectors with high emissions, such as \textbf{Manufacturing and Built Infrastructure} and \textbf{Food and Agriculture}. Redirecting funds to these areas could enhance overall climate change mitigation efforts. Investors may consider these sectors as opportunities for high environmental impact and potentially untapped financial returns.
 
 \subsection{Global Investment Distribution}
 
@@ -603,9 +643,7 @@ We analyzed the global distribution of fundraisers and total amounts raised by c
     \item \textbf{Africa} and \textbf{South America} have minimal fundraising activity, highlighting underserved regions.
 \end{itemize}
 
-\textbf{Interpretation}:
-
-Investment is concentrated in developed regions, suggesting a need to encourage funding in emerging markets, which may offer high-impact opportunities due to less competition and significant environmental challenges.
+\textbf{Interpretation}: Investment is concentrated in developed regions, suggesting a need to encourage funding in emerging markets, which may offer high-impact opportunities due to less competition and significant environmental challenges.
 
 \section{Code and Data Availability}
 
